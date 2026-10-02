@@ -43,9 +43,9 @@ const fieldDefinitions = {
     arrays: ["stack"], booleans: ["featured"],
   },
   courses: {
-    required: ["title", "slug", "description"],
+    required: ["title", "slug", "description", "lessons"],
     strings: { title: 120, slug: 120, category: 60, level: 40, duration: 60, description: 3000, icon: 50, color: 32 },
-    numbers: { lessons: [0, 500], progress: [0, 100] },
+    numbers: { lessons: [1, 120] },
   },
   certificates: {
     required: ["title", "slug", "code", "description"],

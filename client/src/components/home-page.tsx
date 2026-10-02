@@ -9,10 +9,10 @@ import {
   Github, GraduationCap, Layers3, Linkedin, Mail, MapPin, MonitorPlay, MousePointer2,
   Palette, Rocket, Sparkles, Terminal, Youtube,
 } from "lucide-react";
-import { articles, certificates, projects, services, skillGroups, testimonials } from "@/lib/data";
+import { articles, projects, services, skillGroups, testimonials } from "@/lib/data";
 import { usePortfolioCollection } from "@/lib/use-portfolio-collection";
 import { ButtonLink, Eyebrow, Icon, SectionHeading } from "@/components/ui";
-import { ArticleArtwork, CertificateArt, ProjectPreview } from "@/components/visuals";
+import { ArticleArtwork, ProjectPreview } from "@/components/visuals";
 
 const iconForSkill: Record<string, string> = {
   HTML: "Code2", CSS: "Palette", JavaScript: "Braces", TypeScript: "Braces", React: "Atom", "Next.js": "ArrowUpRight",

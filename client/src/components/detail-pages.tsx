@@ -2,13 +2,14 @@
 
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft, ArrowRight, ArrowUpRight, Award, BadgeCheck, BookOpen, Check, Clock3,
   Copy, Download, DownloadCloud, FileCheck2, LockKeyhole, Share2, Sparkles,
 } from "lucide-react";
-import { articles, certificates } from "@/lib/data";
+import { articles } from "@/lib/data";
 import { usePortfolioCollection } from "@/lib/use-portfolio-collection";
+import { useLearnerAuth, type EarnedCertificate } from "@/components/learner-auth";
 import { ButtonLink, Eyebrow } from "@/components/ui";
 import { ArticleArtwork, CertificateArt } from "@/components/visuals";
 
@@ -42,25 +43,63 @@ export function BlogArticlePage() {
 
   return (
     <main className="route-page wrap article-route"><Link className="breadcrumb-back" href="/blog"><ArrowLeft size={13} /> Back to the notebook <span>/</span> <span>{article.category}</span></Link><section className="article-hero"><ArticleArtwork variant={article.variant} /><div className="article-hero__overlay" /><div className="article-hero__copy"><div className="article-meta"><span>{article.category}</span><span>{article.date}</span><span><Clock3 size={12} />{article.readTime}</span></div><h1>{article.title}</h1><p>{article.excerpt}</p><div className="article-byline"><span className="byline-avatar">BH</span><span><b>Bashir Hussein</b><small>Builder, learner & note taker</small></span></div></div><span className="article-hero__spark"><Sparkles size={16} /></span></section>
-      <div className="article-reading"><article className="article-body"><p className="article-lead">{content.intro}</p><div className="article-body__rule"><span /><i>✳</i><span /></div>{content.sections.map((section, index) => <section key={section.title} id={`section-${index + 1}`}><h2><span>{String(index + 1).padStart(2, "0")}</span>{section.title}</h2>{section.body.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}{section.code && <pre><span>THE SHORT VERSION</span><code>{section.code}</code></pre>}</section>)}<aside className="article-takeaway"><Sparkles size={18} /><span><b>A thought to carry with you</b><small>You do not have to know everything before you begin. Start with the next small, useful thing.</small></span></aside><div className="article-tags"><span>IN THIS NOTE</span><span>Build in public</span><span>Keep learning</span><span>Made with care</span></div><div className="article-author"><span className="article-author__avatar">BH</span><span><b>Written by Bashir</b><small>Developer, builder, and forever curious.</small></span><Link href="/profile">A little more about me <ArrowUpRight size={13} /></Link></div></article><aside className="article-sidebar"><div className="article-toc"><span>IN THIS ARTICLE</span>{content.sections.map((section, index) => <a key={section.title} href={`#section-${index + 1}`}><i>{String(index + 1).padStart(2, "0")}</i>{section.title}</a>)}</div><div className="article-aside-card"><span><Sparkles size={16} /></span><b>Enjoyed this note?</b><p>There’s always another idea just around the corner.</p><Link href="/blog">Explore the journal <ArrowRight size={13} /></Link></div><div className="article-share"><span>A GOOD NOTE IS BETTER SHARED.</span><button onClick={() => shareCurrentPage()}><Share2 size={13} /> Copy article link</button></div></aside></div><div className="article-next"><Link href="/blog"><ArrowLeft size={14} /> All notes</Link><Link href="/contact">Have a question? <ArrowRight size={14} /></Link></div>
+      <div className="article-reading"><article className="article-body"><p className="article-lead">{content.intro}</p><div className="article-body__rule"><span /><i>✳</i><span /></div>{content.sections.map((section, index) => <section key={section.title} id={`section-${index + 1}`}><h2><span>{String(index + 1).padStart(2, "0")}</span>{section.title}</h2>{section.body.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}{section.code && <pre><span>THE SHORT VERSION</span><code>{section.code}</code></pre>}</section>)}<aside className="article-takeaway"><Sparkles size={18} /><span><b>A thought to carry with you</b><small>You do not have to know everything before you begin. Start with the next small, useful thing.</small></span></aside><div className="article-tags"><span>IN THIS NOTE</span><span>Build in public</span><span>Keep learning</span><span>Made with care</span></div><div className="article-author"><span className="article-author__avatar">BH</span><span><b>Written by Bashir</b><small>Developer, builder, and forever curious.</small></span><Link href="/about">A little more about Bashir <ArrowUpRight size={13} /></Link></div></article><aside className="article-sidebar"><div className="article-toc"><span>IN THIS ARTICLE</span>{content.sections.map((section, index) => <a key={section.title} href={`#section-${index + 1}`}><i>{String(index + 1).padStart(2, "0")}</i>{section.title}</a>)}</div><div className="article-aside-card"><span><Sparkles size={16} /></span><b>Enjoyed this note?</b><p>There’s always another idea just around the corner.</p><Link href="/blog">Explore the journal <ArrowRight size={13} /></Link></div><div className="article-share"><span>A GOOD NOTE IS BETTER SHARED.</span><button onClick={() => shareCurrentPage()}><Share2 size={13} /> Copy article link</button></div></aside></div><div className="article-next"><Link href="/blog"><ArrowLeft size={14} /> All notes</Link><Link href="/contact">Have a question? <ArrowRight size={14} /></Link></div>
     </main>
   );
 }
 
 export function CertificateDetailPage() {
   const params = useParams<{ slug: string }>();
-  const { items: liveCertificates } = usePortfolioCollection("certificates", certificates);
-  const certificate = liveCertificates.find((item) => item.slug === params.slug);
+  const { certificates: earnedCertificates, user } = useLearnerAuth();
+  const certificate = earnedCertificates.find((item) => item.id === params.slug || item.certificateNumber === params.slug);
   const [copied, setCopied] = useState(false);
   if (!certificate) return <NotFound kind="certificate" />;
+  const certificateNumber = certificate.certificateNumber;
 
+  function share() {
+    if (typeof window !== "undefined" && navigator.clipboard) navigator.clipboard.writeText(`${window.location.origin}/verify/${encodeURIComponent(certificateNumber)}`).then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 1800); }).catch(() => {});
+  }
+  function printCertificate() { if (typeof window !== "undefined") window.print(); }
+  const issued = new Date(certificate.issuedAt);
+  const issuedLabel = Number.isNaN(issued.getTime()) ? "—" : issued.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+
+  return (
+    <main className="route-page wrap certificate-detail"><Link className="breadcrumb-back" href="/certificates"><ArrowLeft size={13} /> My certificates <span>/</span> <span>Certificate details</span></Link><div className="certificate-detail__heading"><Eyebrow icon="Award">A MILESTONE WORTH KEEPING</Eyebrow><h1>Your work.<br /><span className="gradient-text">Your achievement.</span></h1><p>This certificate was awarded to your account when you completed every lesson in the course.</p></div><div className="certificate-detail__layout"><div className="certificate-detail__preview"><CertificateArt title={certificate.courseTitle} recipient={certificate.recipientName || user?.name || "Learner"} issued={issuedLabel} color="blue" /><span className="certificate-detail__secure"><LockKeyhole size={12} /> ACCOUNT-VERIFIED ACHIEVEMENT</span><span className="certificate-detail__shine" /></div><section className="certificate-info"><span className="cert-type cert-type--blue">COURSE COMPLETION</span><h2>{certificate.courseTitle}</h2><p>Completed the full learning path and all {certificate.lessonCount} lessons. This award is recorded in your learner account.</p><div className="certificate-info__verified"><span><BadgeCheck size={19} /></span><span><b>Genuine course completion</b><small>Awarded by Coding With Bashir Learning</small></span><Check size={15} /></div><div className="certificate-info__details"><div><span>RECIPIENT</span><b>{certificate.recipientName || user?.name}</b></div><div><span>DATE EARNED</span><b>{issuedLabel}</b></div><div><span>CERTIFICATE ID</span><b>{certificate.certificateNumber}</b></div><div><span>STATUS</span><b>Course completed</b></div></div><div className="certificate-info__actions"><button className="button button--primary" onClick={printCertificate}><Download size={15} /> Download as PDF</button><button className="button button--outline" onClick={share}>{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? "Link copied" : "Share certificate"}</button></div><p className="certificate-info__print-hint"><FileCheck2 size={12} /> Use your browser’s “Save as PDF” option to keep a printable copy.</p></section></div><div className="certificate-detail__foot"><span><Sparkles size={14} />LEARN SOMETHING NEW EVERY DAY</span><Link href="/courses">Find your next course <ArrowRight size={13} /></Link></div></main>
+  );
+}
+
+
+export function CertificateVerificationPage() {
+  const params = useParams<{ number: string }>();
+  const certificateNumber = params.number;
+  const [certificate, setCertificate] = useState<Omit<EarnedCertificate, "id"> | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    fetch(`/api/verify/certificates/${encodeURIComponent(certificateNumber)}`, { headers: { accept: "application/json" }, cache: "no-store" })
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "This certificate could not be verified.");
+        if (active) setCertificate(payload.item);
+      })
+      .catch(() => { if (active) setCertificate(null); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [certificateNumber]);
+
+  if (loading) return <main className="route-page wrap detail-not-found"><span className="detail-not-found__icon"><Award size={21} /></span><Eyebrow>CHECKING CERTIFICATE</Eyebrow><h1>Verifying this achievement…</h1><p>Looking up the award record.</p></main>;
+  if (!certificate) return <main className="route-page wrap detail-not-found"><span className="detail-not-found__icon"><Award size={21} /></span><Eyebrow>CERTIFICATE NOT FOUND</Eyebrow><h1>We couldn’t verify that number.</h1><p>Check the certificate ID and try again. Only certificates awarded after completing a course can be verified.</p><ButtonLink href="/courses" icon="ArrowLeft" variant="outline">Explore courses</ButtonLink></main>;
+
+  const issued = new Date(certificate.issuedAt);
+  const issuedLabel = Number.isNaN(issued.getTime()) ? "—" : issued.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
   function share() {
     if (typeof window !== "undefined" && navigator.clipboard) navigator.clipboard.writeText(window.location.href).then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 1800); }).catch(() => {});
   }
-  function printCertificate() { if (typeof window !== "undefined") window.print(); }
-
   return (
-    <main className="route-page wrap certificate-detail"><Link className="breadcrumb-back" href="/certificates"><ArrowLeft size={13} /> All certificates <span>/</span> <span>Certificate details</span></Link><div className="certificate-detail__heading"><Eyebrow icon="Award">A MILESTONE WORTH KEEPING</Eyebrow><h1>Small steps.<br /><span className="gradient-text">Real progress.</span></h1><p>Every good skill takes time and care. This one is yours to keep.</p></div><div className="certificate-detail__layout"><div className="certificate-detail__preview"><CertificateArt title={certificate.title} color={certificate.color} /><span className="certificate-detail__secure"><LockKeyhole size={12} /> VERIFIABLE ACHIEVEMENT</span><span className="certificate-detail__shine" /></div><section className="certificate-info"><span className={`cert-type cert-type--${certificate.color}`}>{certificate.category} · {certificate.level}</span><h2>{certificate.title}</h2><p>{certificate.description}</p><div className="certificate-info__verified"><span><BadgeCheck size={19} /></span><span><b>A milestone you can be proud of</b><small>Issued by Coding With Bashir Learning</small></span><Check size={15} /></div><div className="certificate-info__details"><div><span>RECIPIENT</span><b>Bashir Hussein</b></div><div><span>DATE EARNED</span><b>{certificate.issued}</b></div><div><span>ACHIEVEMENT ID</span><b>{certificate.code}</b></div><div><span>LEVEL</span><b>{certificate.level}</b></div></div><div className="certificate-info__actions"><button className="button button--primary" onClick={printCertificate}><Download size={15} /> Download as PDF</button><button className="button button--outline" onClick={share}>{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? "Link copied" : "Share certificate"}</button></div><p className="certificate-info__print-hint"><FileCheck2 size={12} /> Use your browser’s “Save as PDF” option to keep a printable copy.</p></section></div><div className="certificate-detail__foot"><span><Sparkles size={14} />LEARN SOMETHING NEW EVERY DAY</span><Link href="/courses">Find your next course <ArrowRight size={13} /></Link></div></main>
+    <main className="route-page wrap certificate-detail"><Link className="breadcrumb-back" href="/courses"><ArrowLeft size={13} /> Browse courses <span>/</span> <span>Certificate verification</span></Link><div className="certificate-detail__heading"><Eyebrow icon="BadgeCheck">VERIFIED COURSE ACHIEVEMENT</Eyebrow><h1>A real milestone.<br /><span className="gradient-text">Genuinely earned.</span></h1><p>This award is recorded in the Coding With Bashir learner platform.</p></div><div className="certificate-detail__layout"><div className="certificate-detail__preview"><CertificateArt title={certificate.courseTitle} recipient={certificate.recipientName} issued={issuedLabel} color="blue" /><span className="certificate-detail__secure"><BadgeCheck size={12} /> VERIFIED AWARD</span><span className="certificate-detail__shine" /></div><section className="certificate-info"><span className="cert-type cert-type--blue">VERIFIED COURSE COMPLETION</span><h2>{certificate.courseTitle}</h2><p>{certificate.recipientName} completed all {certificate.lessonCount} lessons in this course.</p><div className="certificate-info__verified"><span><BadgeCheck size={19} /></span><span><b>Certificate record confirmed</b><small>Issued by Coding With Bashir Learning</small></span><Check size={15} /></div><div className="certificate-info__details"><div><span>RECIPIENT</span><b>{certificate.recipientName}</b></div><div><span>DATE EARNED</span><b>{issuedLabel}</b></div><div><span>CERTIFICATE ID</span><b>{certificate.certificateNumber}</b></div><div><span>STATUS</span><b>Verified</b></div></div><div className="certificate-info__actions"><button className="button button--primary" onClick={share}>{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? "Link copied" : "Copy verification link"}</button><ButtonLink href="/courses" variant="outline" icon="ArrowRight">Explore courses</ButtonLink></div><p className="certificate-info__print-hint"><LockKeyhole size={12} /> This public page shows only the certificate details needed to verify the award.</p></section></div><div className="certificate-detail__foot"><span><BadgeCheck size={14} />AWARDED AFTER COURSE COMPLETION</span><Link href="/signup">Start learning <ArrowRight size={13} /></Link></div></main>
   );
 }
 

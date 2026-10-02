@@ -21,12 +21,11 @@ const CourseSchema = new Schema({
   slug: { type: String, required: true, unique: true, lowercase: true, maxlength: 120 },
   category: { type: String, trim: true, maxlength: 60 },
   level: { type: String, default: "Beginner", maxlength: 40 },
-  lessons: { type: Number, default: 0, min: 0, max: 500 },
+  lessons: { type: Number, default: 1, min: 1, max: 120 },
   duration: { type: String, maxlength: 60 },
   description: { type: String, maxlength: 3000 },
   icon: { type: String, maxlength: 50 },
   color: { type: String, maxlength: 32 },
-  progress: { type: Number, default: 0, min: 0, max: 100 },
 }, commonOptions);
 
 const CertificateSchema = new Schema({
@@ -77,6 +76,36 @@ const AdminUserSchema = new Schema({
   lastLoginAt: { type: Date, default: null },
 }, commonOptions);
 
+const LearnerSchema = new Schema({
+  name: { type: String, required: true, trim: true, maxlength: 80 },
+  email: { type: String, required: true, trim: true, lowercase: true, unique: true, maxlength: 160 },
+  passwordHash: { type: String, required: true, select: false },
+  active: { type: Boolean, default: true },
+  lastLoginAt: { type: Date, default: null },
+}, commonOptions);
+
+const LearnerProgressSchema = new Schema({
+  learnerId: { type: Schema.Types.ObjectId, ref: "Learner", required: true },
+  courseSlug: { type: String, required: true, trim: true, lowercase: true, maxlength: 140 },
+  courseTitle: { type: String, required: true, trim: true, maxlength: 160 },
+  lessonCount: { type: Number, required: true, min: 1, max: 120 },
+  completedLessonIndexes: { type: [Number], default: [] },
+  completedAt: { type: Date, default: null },
+  certificateId: { type: Schema.Types.ObjectId, ref: "LearnerCertificate", default: null },
+}, commonOptions);
+LearnerProgressSchema.index({ learnerId: 1, courseSlug: 1 }, { unique: true });
+
+const LearnerCertificateSchema = new Schema({
+  learnerId: { type: Schema.Types.ObjectId, ref: "Learner", required: true },
+  courseSlug: { type: String, required: true, trim: true, lowercase: true, maxlength: 140 },
+  courseTitle: { type: String, required: true, trim: true, maxlength: 160 },
+  lessonCount: { type: Number, required: true, min: 1, max: 120 },
+  recipientName: { type: String, required: true, trim: true, maxlength: 80 },
+  certificateNumber: { type: String, required: true, unique: true, trim: true, maxlength: 40 },
+  issuedAt: { type: Date, required: true, default: Date.now },
+}, commonOptions);
+LearnerCertificateSchema.index({ learnerId: 1, courseSlug: 1 }, { unique: true });
+
 const SiteSettingSchema = new Schema({
   key: { type: String, required: true, unique: true, maxlength: 100 },
   value: { type: Schema.Types.Mixed, default: null },
@@ -101,6 +130,9 @@ export const models = {
   testimonials: mongoose.models.Testimonial || mongoose.model("Testimonial", TestimonialSchema),
   messages: mongoose.models.ContactMessage || mongoose.model("ContactMessage", ContactMessageSchema),
   admins: mongoose.models.AdminUser || mongoose.model("AdminUser", AdminUserSchema),
+  learners: mongoose.models.Learner || mongoose.model("Learner", LearnerSchema),
+  learnerProgress: mongoose.models.LearnerProgress || mongoose.model("LearnerProgress", LearnerProgressSchema),
+  learnerCertificates: mongoose.models.LearnerCertificate || mongoose.model("LearnerCertificate", LearnerCertificateSchema),
   audit: mongoose.models.AdminAudit || mongoose.model("AdminAudit", AdminAuditSchema),
   settings: mongoose.models.SiteSetting || mongoose.model("SiteSetting", SiteSettingSchema),
 };

@@ -85,23 +85,27 @@ render.yaml               Render Blueprint for the API service
 | `/resources` | Searchable learning library with path filters and links to courses, projects, certificates, and journal notes |
 | `/projects` | Searchable/filterable project collection |
 | `/courses` | Course catalogue, category filter, and search |
-| `/learn/[slug]` | Interactive lesson workspace and course outline |
-| `/certificates` | Certificate collection and filters |
-| `/certificates/[slug]` | Certificate detail view |
+| `/learn/[slug]` | Account-protected lesson workspace; completed lessons save to that learner’s account |
+| `/certificates` | Account-protected collection of certificates actually earned by the signed-in learner |
+| `/certificates/[slug]` | Private certificate detail for an awarded course completion |
+| `/verify/[number]` | Public verification page for a certificate’s unique award number |
 | `/blog` | Searchable and filterable journal |
 | `/blog/[slug]` | Reading view and in-article navigation |
-| `/dashboard` | Learning dashboard concept with live portfolio collection counts |
-| `/profile` | Profile, skills, projects, certificates, and activity tabs |
-| `/assistant` | Interactive learning-assistant prototype (local suggestion behaviour; no external LLM key required) |
+| `/dashboard` | Account-protected dashboard of real course progress and earned certificates |
+| `/profile` | Private learner account summary and activity |
+| `/assistant` | Account-protected learning assistant prototype (local suggestions; no external LLM key required) |
+| `/login`, `/signup` | Learner account sign-in and registration |
 | `/contact` | Validated contact form; project planner briefs can be continued here |
 | `/admin` | Private creator studio sign-in and role-aware admin dashboard; excluded from search indexing |
 
 ### Dynamic behaviour
 
 - The home hero rotates through developer/building/learning roles and respects reduced-motion settings.
-- Search, tabs, collection filters, course lessons, profile sections, testimonials, and service planner are interactive.
+- Search, tabs, collection filters, course lessons, account sections, testimonials, and service planner are interactive.
+- Learners create an account or sign in before opening a course workspace, dashboard, profile, assistant, or certificates.
+- Lesson completion is stored per learner. Completing every lesson in a course creates one account-linked certificate that can be revisited and downloaded as PDF.
 - Services can be selected together. The planner produces a scope/timeline summary and carries it into `/contact?brief=...`.
-- Public project, course, certificate, article, and testimonial lists load from the API when available and retain bundled fallback content when it is not.
+- Public project, course, article, and testimonial lists load from the API when available and retain bundled fallback content when it is not. Learner progress and certificates never fall back to shared demo data.
 - Admin edits are validated server-side, saved to MongoDB when connected, and returned through the public collection API.
 
 ## Admin roles and permissions
@@ -145,7 +149,23 @@ All endpoints return JSON. Errors use `{ "error": "..." }`; field-validation err
 | `GET` | `/api/:collection/:slug` | Public | Single item lookup for a supported collection |
 | `POST` | `/api/contact` | Public, rate-limited | Validates and stores a contact message |
 
-Public list responses use `{ items, source }`, with source `mongodb` or `preview`. Contact input fields are `name`, `email`, `subject`, and `message`; the endpoint applies length limits, basic email validation, and an 8-submission/15-minute IP limit.
+Public list responses use `{ items, source }`, with source `mongodb` or `preview`. The public `/api/certificates` collection is legacy portfolio content only; learner certificates are generated and returned through the protected endpoints below. Contact input fields are `name`, `email`, `subject`, and `message`; the endpoint applies length limits, basic email validation, and an 8-submission/15-minute IP limit.
+
+### Learner endpoints
+
+The session cookie is HttpOnly, SameSite=Lax, Secure in production, and expires after 14 days. Signup requires a name, valid email, and password of at least 12 characters. Course progress and certificates are scoped to the signed-in learner.
+
+| Method | Path | Access | Behaviour |
+| --- | --- | --- | --- |
+| `GET` | `/api/auth/session` | Public | Returns the safe learner session state |
+| `POST` | `/api/auth/signup` | Public, rate-limited | Creates a learner account and signs it in |
+| `POST` | `/api/auth/login` | Public, rate-limited | Verifies credentials and sets the HttpOnly learner cookie |
+| `POST` | `/api/auth/logout` | Optional session | Clears the learner cookie |
+| `GET` | `/api/learner/progress` | Learner | Lists only that learner’s course progress |
+| `POST` | `/api/learner/courses/:slug/lessons/:lessonIndex/complete` | Learner | Saves a lesson completion; awards a unique certificate on course completion |
+| `GET` | `/api/learner/certificates` | Learner | Lists certificates actually awarded to that learner |
+| `GET` | `/api/learner/certificates/:identifier` | Learner | Returns the learner’s own certificate only |
+| `GET` | `/api/verify/certificates/:certificateNumber` | Public | Confirms a real certificate number and returns only public award details |
 
 ### Admin endpoints
 
@@ -175,8 +195,11 @@ Supported content collection names are exactly `projects`, `courses`, `certifica
 Mongoose collections:
 
 - **Project:** name, slug, category, short label, description, stack, visual variant/color, featured flag.
-- **Course:** title, slug, category, level, lesson count, duration, description, icon/color, demo progress.
-- **Certificate:** title, slug, category, issue date, level, code, color, description.
+- **Course:** title, slug, category, level, lesson count (1–120), duration, description, icon/color.
+- **Legacy portfolio certificate content (`Certificate`):** title, slug, category, issue date, level, code, color, description; it is not used as a learner award.
+- **Learner:** unique normalized email, scrypt password hash, active state, last login.
+- **LearnerProgress:** learner, course slug/title, completed lesson indexes, completion timestamp, awarded certificate reference; unique per learner/course.
+- **LearnerCertificate:** learner, course and recipient snapshot, completed lesson count, unique certificate number, issue timestamp; unique per learner/course.
 - **Article:** title, slug, category, display date, reading time, excerpt, optional plain-text article body, artwork variant.
 - **Testimonial:** name, role, quote, initials, color.
 - **ContactMessage:** name, email, subject, message, status (`new`, `read`, `replied`, `archived`).
@@ -225,11 +248,11 @@ To enable a local owner account, set a unique `JWT_SECRET` (at least 32 bytes), 
 | Variable | Required | Description |
 | --- | --- | --- |
 | `PORT` | Host supplies it on Render | Local default is `4000`; Render injects its own port |
-| `NODE_ENV` | No | Use `production` on Render; enables Secure admin cookies and disables localhost CORS origins |
+| `NODE_ENV` | No | Use `production` on Render; enables Secure admin/learner cookies and disables localhost CORS origins |
 | `MONGODB_URI` | Required in production | MongoDB connection string. `MONGO_URI` is accepted as a legacy alias |
 | `FRONTEND_ORIGINS` | For direct cross-origin browser access | Comma-separated exact origins, e.g. `https://your-site.vercel.app,https://your-domain.example` |
 | `CLIENT_ORIGIN` | Optional legacy alias | One exact allowed browser origin; `FRONTEND_ORIGINS` is preferred |
-| `JWT_SECRET` | Required for admin sessions | Random secret of at least 32 bytes. Keep private; rotate by changing the secret and reauthenticating |
+| `JWT_SECRET` | Required for learner and admin sessions | Random secret of at least 32 bytes. Keep private; rotating it signs both account types out |
 | `ADMIN_EMAIL` | Required to bootstrap first owner | Owner email; changing it on the host updates the environment-managed owner at next start |
 | `ADMIN_PASSWORD` | Required to bootstrap first owner | Unique 12+ character passphrase; changing it resets the bootstrap owner’s password on next start |
 | `ADMIN_NAME` | No | Display name for the bootstrap owner |
@@ -246,13 +269,13 @@ To enable a local owner account, set a unique `JWT_SECRET` (at least 32 bytes), 
 ## Deploy the API to Render
 
 1. **Create MongoDB first.** Create a MongoDB Atlas database and a database user with access only to this app’s database. Configure Atlas network access for the Render service according to your plan/security policy.
-2. **Create the Render service.** Connect the GitHub repository and use the included `render.yaml` Blueprint, or create a Node web service manually with root directory `server/`, build command `npm ci`, start command `npm start`, and health-check path `/api/health`.
+2. **Create the Render service.** Connect the GitHub repository and use the included `render.yaml` Blueprint, or create a Node web service manually with root directory `server/`, build command `npm ci && npm run build`, start command `npm start`, and health-check path `/api/health`.
 3. **Set service secrets.** Provide `MONGODB_URI`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`. `render.yaml` generates `JWT_SECRET`; keep the generated secret private. Set `ADMIN_PASSWORD` to a unique password with at least 12 characters.
 4. **Set CORS origins.** Set `FRONTEND_ORIGINS` to the exact Vercel production origin(s), comma-separated if needed. Add exact preview origins only if you call the API directly from those browser origins. Do not use `*` with credentialed admin sessions.
 5. **Deploy and inspect health.** `GET https://<render-service>.onrender.com/api/health` should return `ok: true` and `database: "mongodb"`. A `503` means persistent storage is not ready; check `MONGODB_URI`, Atlas network rules, and service logs before serving the frontend.
 6. **Confirm admin bootstrap.** Render logs should report a connected database and a ready bootstrap owner. Admin registration is intentionally not public.
 
-`server/src/index.js` listens on `0.0.0.0` and `process.env.PORT`, which Render requires. The server starts its listener before waiting on the optional database connection so the health endpoint can respond while startup is finishing.
+`server/src/index.js` listens on `0.0.0.0` and `process.env.PORT`, which Render requires. The listener starts while the required MongoDB connection is checked; production health and API routes remain unavailable until persistent storage is ready.
 
 ## Deploy the frontend to Vercel
 
@@ -261,7 +284,7 @@ To enable a local owner account, set a unique `JWT_SECRET` (at least 32 bytes), 
 3. Add `API_INTERNAL_URL` to the Vercel **Production**, **Preview**, and **Development** environments that you intend to use. Set it to the Render API’s HTTPS base URL with no trailing slash. Vercel builds fail with a clear error if this value is missing.
 4. Deploy. The Next.js rewrite proxies `/api/*` through Vercel to Render; browser code continues to use same-origin `/api` URLs. Do not hardcode `localhost`, a Render private address, or an API secret into client-side code.
 5. Add the final Vercel domain to Render’s `FRONTEND_ORIGINS` if direct browser-to-API calls are introduced. The current UI uses the same-origin rewrite; exact CORS origins still provide the safe configuration for future direct calls.
-6. Verify the Vercel site, `/api/health` through the Vercel domain, `/projects`, `/services`, and `/admin`. Sign in with the bootstrap owner and verify a content edit persists after a redeploy.
+6. Verify the Vercel site, `/api/health` through the Vercel domain, `/projects`, and `/services`. Create a learner account, complete a course’s lessons, and verify the progress and awarded certificate remain after signing out/in and after a redeploy. Also verify the bootstrap owner can sign in at `/admin`.
 
 ### Manual Vercel environment example
 
@@ -288,7 +311,8 @@ Do not add real values to `.env.example`, `render.yaml`, README snippets, fronte
 ```bash
 npm run build       # optimized Next.js production build
 npm run typecheck   # TypeScript check
-npm test            # API + admin/RBAC tests
+npm test            # API, learner-auth/progress/certificate, and admin/RBAC tests
+npm --prefix server run build  # Render API syntax/build validation
 npm run dev          # local API and frontend together
 npm start            # local production server pair (build first)
 ```
@@ -306,9 +330,9 @@ An unauthenticated admin session check should return a JSON setup/authentication
 ## Security notes and current limitations
 
 - Admin access is disabled until a valid `JWT_SECRET` and bootstrap owner credentials are configured.
-- Passwords use Node’s scrypt implementation with per-password random salts. Session cookies are HttpOnly, SameSite=Lax, Secure in production, and expire after eight hours.
+- Learner and admin passwords use Node’s scrypt implementation with per-password random salts. Separate HttpOnly, SameSite=Lax cookies are Secure in production; learner sessions expire after 14 days and admin sessions after eight hours.
 - There is no public admin signup, no wildcard credentialed CORS, and no role-only frontend security; API authorization is enforced server-side.
 - The local JSON store is a development/preview fallback only. Production data routes return `503` until MongoDB is connected, rather than accepting writes to an ephemeral Render filesystem.
-- The learner dashboard/progress and AI assistant are portfolio prototypes; they do not implement learner account registration, a course video backend, payment processing, or an external AI provider.
-- Admin content fields intentionally match the current portfolio schemas. Large media uploads, email delivery, password-reset emails, MFA/SSO, and a production learner identity system are not included in this release.
+- Learner registration, sign-in, per-account course progress, and account-linked course-completion certificates are implemented. Lesson materials and the assistant’s replies remain lightweight in-app learning prototypes; there is no hosted video backend, payment flow, or external AI provider.
+- Admin content fields intentionally match the current portfolio schemas. Large media uploads, email delivery, password-reset emails, and MFA/SSO are not included in this release.
 - Before public production launch, configure real contact/social details, a custom domain, strong unique secrets, database backups, and a privacy/retention policy for contact messages.

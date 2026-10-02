@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight, Check, Menu, Moon, Search, Sun, X } from "lucide-react";
 import { LogoMark } from "@/components/ui";
+import { useLearnerAuth } from "@/components/learner-auth";
 
 const homeLinks = [
   ["Home", "/#home"], ["About", "/#about"], ["Services", "/#what-i-do"],
@@ -32,6 +32,7 @@ const searchable = [
 ];
 
 export function SiteHeader() {
+  const { user, signOut } = useLearnerAuth();
   const pathname = usePathname();
   const isHome = pathname === "/";
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -96,9 +97,13 @@ export function SiteHeader() {
             <button className="icon-button header-search" aria-label="Search the site" title="Search (⌘K)" onClick={() => setSearchOpen(true)}><Search size={17} /></button>
             <a className="icon-button header-github" aria-label="Bashir on GitHub" href="https://github.com/CodingWithBashir" target="_blank" rel="noreferrer"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .75a11.25 11.25 0 0 0-3.56 21.92c.56.1.77-.24.77-.54v-2.1c-3.15.68-3.82-1.34-3.82-1.34-.51-1.31-1.26-1.66-1.26-1.66-1.03-.7.08-.69.08-.69 1.14.08 1.74 1.17 1.74 1.17 1.02 1.74 2.67 1.24 3.32.95.1-.74.4-1.24.73-1.53-2.51-.29-5.15-1.26-5.15-5.58 0-1.24.44-2.24 1.17-3.03-.12-.29-.51-1.44.11-2.99 0 0 .95-.3 3.09 1.16a10.72 10.72 0 0 1 5.63 0c2.15-1.46 3.08-1.16 3.08-1.16.62 1.55.23 2.7.12 2.99.73.79 1.16 1.79 1.16 3.03 0 4.33-2.64 5.28-5.16 5.57.41.36.77 1.04.77 2.1v3.11c0 .3.2.65.77.54A11.25 11.25 0 0 0 12 .75Z" /></svg></a>
             <button className="icon-button theme-toggle" aria-label={light ? "Switch to dark theme" : "Switch to light theme"} title="Change appearance" onClick={toggleTheme}>{light ? <Moon size={16} /> : <Sun size={16} />}</button>
-            <Link href="/profile" className="header-avatar" aria-label="View Bashir's profile">
-              <Image src="/images/developer-hero.png" alt="Bashir" fill sizes="36px" unoptimized />
-            </Link>
+            {user ? <>
+              <Link href="/dashboard" className="header-account" aria-label={`${user.name}'s learning dashboard`} onClick={() => setMobileOpen(false)}>
+                <span className="header-avatar" aria-hidden="true">{user.name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("").toUpperCase()}</span>
+                <span className="header-account__name">{user.name.split(/\s+/)[0]}</span>
+              </Link>
+              <button className="header-signout" onClick={() => { void signOut().catch(() => undefined); setMobileOpen(false); }}>Sign out</button>
+            </> : <Link href="/login" className="header-signin" onClick={() => setMobileOpen(false)}>Sign in</Link>}
             <button className="icon-button mobile-menu-toggle" onClick={() => setMobileOpen(!mobileOpen)} aria-label={mobileOpen ? "Close navigation" : "Open navigation"} aria-expanded={mobileOpen}>
               {mobileOpen ? <X size={19} /> : <Menu size={19} />}
             </button>

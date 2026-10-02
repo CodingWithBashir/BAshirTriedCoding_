@@ -1,0 +1,97 @@
+.page {
+  width: min(100% - 36px, 1000px);
+  min-height: calc(100vh - 165px);
+  margin: 0 auto;
+  padding: 22px 0 56px;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 14px 2px;
+  color: #aaa7c1;
+  font-size: 12px;
+  transition: color 160ms ease;
+}
+.back:hover { color: #c9b8ff; }
+
+.card {
+  display: grid;
+  grid-template-columns: minmax(280px, .88fr) minmax(350px, 1fr);
+  min-height: 570px;
+  overflow: hidden;
+  border: 1px solid rgba(154, 143, 215, .2);
+  border-radius: 19px;
+  background: #111421;
+  box-shadow: 0 26px 80px rgba(0, 0, 0, .25);
+}
+
+.art {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: 29px;
+  background: radial-gradient(ellipse at 68% 18%, rgba(98, 65, 176, .35), transparent 40%), linear-gradient(145deg, #171a36, #101322 69%);
+  isolation: isolate;
+}
+.art::before,.art::after { position: absolute; z-index: -1; content: ""; border: 1px solid rgba(171, 151, 255, .12); border-radius: 50%; }
+.art::before { width: 360px; height: 360px; right: -115px; top: 55px; }
+.art::after { width: 270px; height: 270px; right: -70px; top: 100px; }
+.artGlow { position: absolute; z-index: -1; right: 18%; top: 22%; width: 150px; height: 150px; border-radius: 50%; background: rgba(121, 82, 235, .16); filter: blur(26px); }
+.artMark { width: 50px; height: 50px; display: grid; place-items: center; border: 1px solid rgba(206, 191, 255, .23); border-radius: 15px; background: linear-gradient(145deg, #865de5, #5432b0); color: #fff; box-shadow: 0 9px 28px rgba(93, 62, 191, .3); }
+.artSpark { position: absolute; top: 69px; right: 21%; color: #d7c9ff; }
+.artCopy { max-width: 310px; margin-top: auto; padding: 70px 0 37px; }
+.artCopy > span { color: #b9a6fa; font-size: 9px; font-weight: 700; letter-spacing: 1.5px; }
+.artCopy b { display: block; margin-top: 13px; color: #f6f3ff; font: 600 clamp(29px, 4vw, 43px)/1.12 var(--font-display, sans-serif); letter-spacing: -1.7px; }
+.artCopy small { display: block; max-width: 245px; margin-top: 12px; color: #b1b5cc; font-size: 12px; line-height: 1.7; }
+.artFoot { display: flex; align-items: center; gap: 5px; color: #aaaac2; font-size: 10px; }
+.artFoot i { display: block; width: 5px; height: 5px; border-radius: 50%; background: #9a7cff; }
+.artFoot span { margin-left: 7px; }
+
+.formPanel { display: flex; flex-direction: column; justify-content: center; padding: 38px clamp(28px, 5vw, 58px); background: linear-gradient(145deg, rgba(21, 24, 39, .98), #111421 72%); }
+.brand { display: flex; align-items: center; gap: 8px; margin-bottom: 31px; color: #d1c6f4; font-size: 9px; font-weight: 700; letter-spacing: 1px; }
+.brand > span { width: 25px; height: 25px; display: grid; place-items: center; border-radius: 7px; background: linear-gradient(140deg, #9163f0, #633ebd); color: white; }
+.eyebrow { color: #aa90f1; font-size: 9px; font-weight: 700; letter-spacing: 1.5px; }
+.formPanel h1 { margin: 8px 0 7px; color: #f4f2fa; font: 600 clamp(25px, 3vw, 32px)/1.15 var(--font-display, sans-serif); letter-spacing: -1px; }
+.intro { max-width: 390px; margin: 0; color: #a4a9bd; font-size: 12px; line-height: 1.7; }
+.form { display: grid; gap: 14px; margin-top: 23px; }
+.field { display: grid; gap: 6px; color: #d9d9e8; font-size: 11px; font-weight: 600; }
+.field > div { min-height: 42px; display: flex; align-items: center; gap: 9px; padding: 0 11px; border: 1px solid #303449; border-radius: 8px; background: #111421; color: #8e86ad; transition: border-color 160ms ease, box-shadow 160ms ease; }
+.field > div:focus-within { border-color: #8063d6; box-shadow: 0 0 0 3px rgba(125, 96, 215, .12); }
+.field input { width: 100%; min-width: 0; height: 40px; border: 0; outline: 0; background: transparent; color: #f3f2fa; font-size: 12px; }
+.field input::placeholder { color: #73788e; }
+.field small { color: #888da2; font-size: 10px; font-weight: 400; }
+.reveal { width: 26px; height: 28px; flex: 0 0 auto; display: grid; place-items: center; border: 0; background: transparent; color: #989ab0; cursor: pointer; }
+.error { margin: -2px 0 0; padding: 9px 11px; border: 1px solid rgba(243, 118, 132, .28); border-radius: 7px; background: rgba(177, 52, 70, .1); color: #ffb5bc; font-size: 11px; line-height: 1.5; }
+.submit { min-height: 43px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 3px; border: 1px solid rgba(202, 186, 255, .22); border-radius: 8px; background: linear-gradient(105deg, #8058d8, #6945c5); color: white; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 18px rgba(93, 61, 178, .2); transition: filter 160ms ease, transform 160ms ease; }
+.submit:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
+.submit:disabled { opacity: .65; cursor: wait; }
+.switch { margin: 16px 0 0; color: #a4a6b9; font-size: 11px; text-align: center; }
+.switch a { color: #c4adff; font-weight: 700; }
+.switch a:hover { text-decoration: underline; }
+.secure { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 25px; padding-top: 15px; border-top: 1px solid rgba(162, 164, 189, .12); color: #888ea5; font-size: 9px; }
+.secure svg { flex: 0 0 auto; color: #8d77d3; }
+.terms { margin: 12px 0 0; color: #85899e; font-size: 9px; text-align: center; }
+
+@media (max-width: 700px) {
+  .page { width: min(100% - 24px, 480px); min-height: calc(100vh - 130px); padding-top: 14px; }
+  .card { grid-template-columns: 1fr; min-height: 0; border-radius: 15px; }
+  .art { min-height: 190px; padding: 18px; }
+  .artMark { width: 39px; height: 39px; border-radius: 12px; }
+  .artMark svg { width: 19px; }
+  .artSpark { top: 34px; right: 24%; }
+  .art::before { width: 230px; height: 230px; top: -36px; right: -50px; }
+  .art::after { width: 165px; height: 165px; top: -3px; right: -19px; }
+  .artCopy { padding: 24px 0 0; }
+  .artCopy > span { font-size: 8px; }
+  .artCopy b { margin-top: 6px; font-size: 25px; letter-spacing: -.8px; }
+  .artCopy small { margin-top: 5px; font-size: 10px; }
+  .artFoot { position: absolute; right: 17px; bottom: 19px; font-size: 8px; }
+  .formPanel { padding: 25px 20px 23px; }
+  .brand { margin-bottom: 21px; }
+  .formPanel h1 { font-size: 27px; }
+  .form { gap: 12px; margin-top: 18px; }
+}

@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "node --check src/index.js && node --check src/env.js && node --check src/app.js && node --check src/admin.js && node --check src/admin-auth.js && node --check src/learner.js && node --check src/learner-auth.js && node --check src/passwords.js && node --check src/storage.js && node --check src/models.js",
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "test": "node --test"

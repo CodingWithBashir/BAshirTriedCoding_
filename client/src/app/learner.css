@@ -1,0 +1,37 @@
+/* Learner-account surfaces: real records from the authenticated account. */
+.workspace-user__avatar { display: grid; place-items: center; color: #f4efff; font: 700 11px var(--font-display); }
+.workspace-signout { min-height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 7px; border: 0; border-radius: 6px; background: transparent; color: #8791aa; font: inherit; font-size: 8px; text-align: left; cursor: pointer; }
+.workspace-signout:hover { background: rgba(124, 87, 219, .08); color: #c2a9ff; }
+.profile-learner-avatar { display: grid; place-items: center; color: #f5f1ff; font: 700 25px var(--font-display); letter-spacing: -.8px; }
+.profile-social-row > span { min-height: 27px; display: inline-flex; align-items: center; gap: 5px; padding: 0 8px; border: 1px solid rgba(179,163,239,.19); border-radius: 7px; background: rgba(7,10,23,.4); color: #d0c2f9; font-size: 8px; }
+.dashboard-empty,.activity-empty { min-height: 176px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; padding: 20px 14px; border: 1px dashed rgba(149, 142, 205, .2); border-radius: 9px; color: #908ca8; text-align: center; }
+.dashboard-empty > svg,.activity-empty > span { color: #9c82ea; }
+.dashboard-empty > b { color: #e6e0f5; font: 600 12px var(--font-display); }
+.dashboard-empty > p,.activity-empty > p { max-width: 320px; margin: 0; color: #959bb1; font-size: 9px; line-height: 1.6; }
+.dashboard-empty .button { margin-top: 5px; }
+.certificate-empty-hero { width: min(255px, 100%); min-height: 185px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; border: 1px dashed rgba(192, 171, 255, .35); border-radius: 13px; background: linear-gradient(145deg, rgba(118, 88, 207, .17), rgba(12, 16, 37, .68)); color: #c9b6ff; text-align: center; box-shadow: 0 0 45px rgba(105, 74, 198, .12); }
+.certificate-empty-hero > span { width: 56px; height: 56px; display: grid; place-items: center; border: 1px solid rgba(200, 183, 255, .28); border-radius: 50%; background: rgba(125, 92, 222, .2); }
+.certificate-empty-hero b { color: #f0eaff; font: 600 13px var(--font-display); }
+.certificate-empty-hero small { color: #a5a0ba; font-size: 9px; }
+.certificate-empty-state { min-height: 245px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; margin-top: 14px; padding: 25px; border: 1px dashed rgba(149, 142, 205, .24); border-radius: 12px; background: rgba(15, 18, 36, .42); text-align: center; }
+.certificate-empty-state > span { width: 47px; height: 47px; display: grid; place-items: center; border: 1px solid rgba(157, 132, 235, .28); border-radius: 14px; background: rgba(111, 81, 194, .14); color: #bba3ff; }
+.certificate-empty-state h2 { margin: 3px 0 0; color: #efebfa; font: 600 18px var(--font-display); }
+.certificate-empty-state p { max-width: 450px; margin: 0 0 4px; color: #9ca3b9; font-size: 10px; line-height: 1.65; }
+.certificate-empty-state .button { min-height: 32px; }
+.lesson-earned { display: flex; align-items: center; gap: 10px; margin: 12px 0; padding: 11px 13px; border: 1px solid rgba(107, 213, 171, .24); border-radius: 8px; background: linear-gradient(100deg, rgba(50, 135, 110, .13), rgba(36, 33, 76, .16)); }
+.lesson-earned > span { width: 31px; height: 31px; display: grid; flex: 0 0 auto; place-items: center; border-radius: 9px; background: rgba(91, 206, 159, .14); color: #8ce3bb; }
+.lesson-earned p { display: grid; flex: 1; gap: 3px; margin: 0; }
+.lesson-earned p b { color: #d9f6e7; font-size: 10px; }
+.lesson-earned p small { color: #98b8aa; font-size: 8px; }
+.lesson-earned > a { display: inline-flex; align-items: center; gap: 4px; color: #b9a6ff; font-size: 9px; white-space: nowrap; }
+.lesson-error { margin: 9px 0; padding: 9px 11px; border: 1px solid rgba(243, 118, 132, .28); border-radius: 7px; background: rgba(177, 52, 70, .1); color: #ffb5bc; font-size: 10px; }
+.lesson-complete-button:disabled { opacity: .72; cursor: default; }
+
+@media (max-width: 760px) {
+  .workspace-user__avatar { font-size: 9px; }
+  .workspace-signout { display: none; }
+  .profile-learner-avatar { font-size: 19px; }
+  .lesson-earned { align-items: flex-start; flex-wrap: wrap; }
+  .lesson-earned p { min-width: calc(100% - 45px); }
+  .lesson-earned > a { margin-left: 41px; }
+}

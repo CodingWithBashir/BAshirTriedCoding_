@@ -33,7 +33,7 @@ export function ArticleArtwork({ variant = "react" }: { variant?: string }) {
   );
 }
 
-export function CertificateArt({ title, color = "blue", compact = false }: { title: string; color?: string; compact?: boolean }) {
+export function CertificateArt({ title, recipient, issued, color = "blue", compact = false }: { title: string; recipient: string; issued: string; color?: string; compact?: boolean }) {
   return (
     <div className={`certificate-art certificate-art--${color}${compact ? " certificate-art--compact" : ""}`} aria-label={`Certificate preview: ${title}`} role="img">
       <div className="certificate-art__corner certificate-art__corner--tl" /><div className="certificate-art__corner certificate-art__corner--br" />
@@ -42,11 +42,11 @@ export function CertificateArt({ title, color = "blue", compact = false }: { tit
         <span className="certificate-art__rule" />
         <small className="certificate-art__overline">CERTIFICATE OF COMPLETION</small>
         <span className="certificate-art__text">This certifies that</span>
-        <b className="certificate-art__name">Bashir Hussein</b>
+        <b className="certificate-art__name">{recipient}</b>
         <span className="certificate-art__text">has successfully completed</span>
         <b className="certificate-art__course">{title}</b>
         <span className="certificate-art__rule certificate-art__rule--short" />
-        <span className="certificate-art__sign-row"><i>Bashir Hussein<small>INSTRUCTOR</small></i><b><Award size={compact ? 17 : 23} /></b><i>May 20, 2025<small>DATE ISSUED</small></i></span>
+        <span className="certificate-art__sign-row"><i>Bashir Hussein<small>INSTRUCTOR</small></i><b><Award size={compact ? 17 : 23} /></b><i>{issued}<small>DATE ISSUED</small></i></span>
       </div>
       <span className="certificate-art__seal"><Check size={compact ? 11 : 14} /></span>
     </div>

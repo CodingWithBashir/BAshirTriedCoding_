@@ -4,8 +4,10 @@ import "@fontsource-variable/space-grotesk";
 import "@fontsource/caveat/500.css";
 import "./globals.css";
 import "./platform.css";
+import "./learner.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { LearnerProvider } from "@/components/learner-auth";
 
 export const metadata: Metadata = {
   title: {
@@ -32,9 +34,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body>
-        <SiteHeader />
-        {children}
-        <SiteFooter />
+        <LearnerProvider>
+          <SiteHeader />
+          {children}
+          <SiteFooter />
+        </LearnerProvider>
       </body>
     </html>
   );

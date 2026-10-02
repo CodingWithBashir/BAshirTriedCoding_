@@ -1,4 +1,5 @@
-import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { hashPassword, verifyPassword } from "./passwords.js";
 import {
   createAdminUser,
   findAdminByEmail,
@@ -10,40 +11,11 @@ import {
 export const ADMIN_ROLES = ["owner", "admin", "editor", "support", "viewer"];
 export const SESSION_COOKIE = "cwb_admin_session";
 const SESSION_SECONDS = 60 * 60 * 8;
-const PASSWORD_BYTES = 64;
-const SCRYPT_COST = 16384;
-
 export function isAdminSystemReady() {
   return Boolean(process.env.JWT_SECRET && Buffer.byteLength(process.env.JWT_SECRET) >= 32);
 }
 
-export function hashAdminPassword(password) {
-  const salt = randomBytes(16);
-  const hash = scryptSync(String(password), salt, PASSWORD_BYTES, {
-    N: SCRYPT_COST,
-    r: 8,
-    p: 1,
-    maxmem: 64 * 1024 * 1024,
-  });
-  return `scrypt$${SCRYPT_COST}$8$1$${salt.toString("base64url")}$${hash.toString("base64url")}`;
-}
-
-function passwordMatches(password, stored) {
-  try {
-    const [algorithm, cost, blockSize, parallelism, saltValue, hashValue] = String(stored).split("$");
-    if (algorithm !== "scrypt" || !saltValue || !hashValue) return false;
-    const expected = Buffer.from(hashValue, "base64url");
-    const actual = scryptSync(String(password), Buffer.from(saltValue, "base64url"), expected.length, {
-      N: Number(cost),
-      r: Number(blockSize),
-      p: Number(parallelism),
-      maxmem: 64 * 1024 * 1024,
-    });
-    return actual.length === expected.length && timingSafeEqual(actual, expected);
-  } catch {
-    return false;
-  }
-}
+export const hashAdminPassword = hashPassword;
 
 export async function bootstrapConfiguredOwner() {
   if (process.env.NODE_ENV === "production" && !mongoConnected) {
@@ -92,7 +64,7 @@ export function publicAdmin(admin) {
 
 export async function authenticateCredentials(email, password) {
   const admin = await findAdminByEmail(String(email || "").trim().toLowerCase());
-  if (!admin || !admin.active || !passwordMatches(password, admin.passwordHash)) return null;
+  if (!admin || !admin.active || !verifyPassword(password, admin.passwordHash)) return null;
   return admin;
 }
 
@@ -103,7 +75,7 @@ function encode(value) {
 function signToken(admin) {
   const now = Math.floor(Date.now() / 1000);
   const header = encode({ alg: "HS256", typ: "JWT" });
-  const payload = encode({ sub: String(admin.id), iat: now, exp: now + SESSION_SECONDS });
+  const payload = encode({ sub: String(admin.id), kind: "admin", iat: now, exp: now + SESSION_SECONDS });
   const unsigned = `${header}.${payload}`;
   const signature = createHmac("sha256", process.env.JWT_SECRET).update(unsigned).digest("base64url");
   return `${unsigned}.${signature}`;
@@ -127,7 +99,7 @@ function verifyToken(token) {
   try {
     const header = JSON.parse(Buffer.from(pieces[0], "base64url").toString("utf8"));
     const payload = JSON.parse(Buffer.from(pieces[1], "base64url").toString("utf8"));
-    if (header.alg !== "HS256" || !payload.sub || !Number.isFinite(payload.exp) || payload.exp <= Date.now() / 1000) return null;
+    if (header.alg !== "HS256" || (payload.kind && payload.kind !== "admin") || !payload.sub || !Number.isFinite(payload.exp) || payload.exp <= Date.now() / 1000) return null;
     return payload;
   } catch {
     return null;

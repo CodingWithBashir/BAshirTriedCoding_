@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import { adminRouter } from "./admin.js";
+import { learnerRouter } from "./learner.js";
 import { findBySlug, listContent, mongoConnected, saveMessage } from "./storage.js";
 
 export const app = express();
@@ -56,7 +57,7 @@ app.get("/api", (_request, response) => {
   response.json({
     name: "Coding With Bashir API",
     version: "1.1.0",
-    routes: ["/api/health", "/api/projects", "/api/courses", "/api/certificates", "/api/articles", "/api/testimonials", "/api/contact", "/api/admin/*"],
+    routes: ["/api/health", "/api/projects", "/api/courses", "/api/certificates", "/api/articles", "/api/testimonials", "/api/contact", "/api/auth/*", "/api/learner/*", "/api/admin/*"],
     adminAuth: "HttpOnly session cookie; role-based access control",
   });
 });
@@ -69,7 +70,8 @@ app.use("/api", (_request, response, next) => {
   next();
 });
 
-// Admin routes are mounted before the public collection catch-all.
+// Account and learning APIs are mounted before the public collection catch-all.
+app.use("/api", learnerRouter);
 app.use("/api/admin", adminRouter);
 
 app.get("/api/:collection", async (request, response, next) => {
@@ -125,7 +127,7 @@ app.use((error, _request, response, _next) => {
   const message = status === 413
     ? "Your request is too large."
     : status === 409
-      ? "That record conflicts with an existing value."
+      ? error.code === 11000 ? "That record conflicts with an existing value." : error.message || "That record conflicts with an existing value."
       : status >= 500
         ? "Something went wrong on the server."
         : error.message || "The request could not be completed.";
