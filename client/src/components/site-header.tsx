@@ -8,15 +8,20 @@ import { ArrowUpRight, Check, Menu, Moon, Search, Sun, X } from "lucide-react";
 import { LogoMark } from "@/components/ui";
 
 const homeLinks = [
-  ["Home", "/#home"], ["About", "/#about"], ["Projects", "/#projects"],
-  ["Skills", "/#skills"], ["Blog", "/#blog"], ["Contact", "/contact"],
+  ["Home", "/#home"], ["About", "/#about"], ["Services", "/#what-i-do"],
+  ["Projects", "/#projects"], ["Skills", "/#skills"], ["Blog", "/#blog"], ["Contact", "/contact"],
 ];
 const appLinks = [
-  ["Home", "/"], ["Courses", "/courses"], ["Projects", "/projects"],
+  ["Home", "/"], ["About", "/about"], ["Services", "/services"],
+  ["Resources", "/resources"], ["Courses", "/courses"], ["Projects", "/projects"],
   ["Certificates", "/certificates"], ["Blog", "/blog"], ["Contact", "/contact"],
 ];
 const searchable = [
   { title: "Home", detail: "Meet Bashir", href: "/" },
+  { title: "About", detail: "Values, approach, and toolkit", href: "/about" },
+  { title: "Services", detail: "Explore a scope and plan a project", href: "/services" },
+  { title: "Learning resources", detail: "Search courses, notes, and examples", href: "/resources" },
+  { title: "Creator studio", detail: "Private portfolio administration", href: "/admin" },
   { title: "Courses", detail: "Explore learning paths", href: "/courses" },
   { title: "Certificates", detail: "View achievements", href: "/certificates" },
   { title: "Projects", detail: "Selected work", href: "/projects" },

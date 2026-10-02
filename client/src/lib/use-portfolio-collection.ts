@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export function usePortfolioCollection<T extends { slug?: string }>(collection: string, fallback: T[]) {
+export function usePortfolioCollection<T extends object>(collection: string, fallback: T[]) {
   const [items, setItems] = useState<T[]>(fallback);
   const [ready, setReady] = useState(false);
 
@@ -14,7 +14,7 @@ export function usePortfolioCollection<T extends { slug?: string }>(collection: 
         return response.json();
       })
       .then((payload: { items?: T[] }) => {
-        if (mounted && Array.isArray(payload.items) && payload.items.length) setItems(payload.items);
+        if (mounted && Array.isArray(payload.items)) setItems(payload.items);
       })
       .catch(() => { /* Curated bundled content stays available when the API is offline. */ })
       .finally(() => { if (mounted) setReady(true); });

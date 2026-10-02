@@ -13,14 +13,12 @@ import { ArticleArtwork, CertificateArt, CourseArtwork, ProjectPreview } from "@
 import { WorkspaceSidebar } from "@/components/workspace-pages";
 
 const courseCategories = ["All", ...pageCategories.slice(1)];
-const projectCategories = ["All work", "Web App", "AI / Media", "AI / ML", "EdTech", "Creative tools"];
-const certificateCategories = ["All certificates", "Course", "Challenge", "Achievement"];
-const articleCategories = ["All", "Tutorial", "Projects", "Tech news", "Engineering", "Personal"];
 
 export function ProjectsPage() {
   const { items } = usePortfolioCollection("projects", defaultProjects);
   const [filter, setFilter] = useState("All work");
   const [query, setQuery] = useState("");
+  const categories = ["All work", ...Array.from(new Set(items.map((project) => project.category).filter(Boolean)))];
   const filtered = useMemo(() => items.filter((project) => {
     const matchesCategory = filter === "All work" || project.category === filter;
     const matchesQuery = `${project.name} ${project.description} ${project.stack.join(" ")}`.toLowerCase().includes(query.toLowerCase());
@@ -30,7 +28,7 @@ export function ProjectsPage() {
   return (
     <main className="route-page wrap">
       <PageIntro eyebrow="THE THINGS I’VE MADE" icon="PanelsTopLeft" title="Small ideas." accent="Real things." description="A collection of experiments, useful tools, and products built with a lot of curiosity and a little bit of code." action={<Link className="button button--primary" href="/contact"><Sparkles size={15} /> Build something <ArrowUpRight size={14} /></Link>} />
-      <div className="collection-toolbar"><div className="filter-pills" role="tablist" aria-label="Filter projects">{projectCategories.map((category) => <button key={category} role="tab" aria-selected={filter === category} onClick={() => setFilter(category)} className={`filter-pill${filter === category ? " is-active" : ""}`}>{category}</button>)}</div><label className="search-field"><Search size={15} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Find a project…" aria-label="Search projects" /></label></div>
+      <div className="collection-toolbar"><div className="filter-pills" role="tablist" aria-label="Filter projects">{categories.map((category) => <button key={category} role="tab" aria-selected={filter === category} onClick={() => setFilter(category)} className={`filter-pill${filter === category ? " is-active" : ""}`}>{category}</button>)}</div><label className="search-field"><Search size={15} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Find a project…" aria-label="Search projects" /></label></div>
       <div className="collection-count"><span>{filtered.length} <i>{filtered.length === 1 ? "project" : "projects"}</i></span><span className="result-filter"><Filter size={12} /> Curated experiments & shipped work</span></div>
       {filtered.length ? <div className="project-grid project-grid--collection">{filtered.map((project, index) => <article className="project-card" id={project.slug} key={project.slug}><Link href={`/projects#${project.slug}`} className="project-card__preview-link" aria-label={`Open ${project.name} project details`}><ProjectPreview variant={project.variant} name={project.name} /><span className="project-open"><ArrowUpRight size={16} /></span></Link><div className="project-card__body"><div className="project-card__meta"><span className="project-category"><i />{project.label}</span><span className="project-card__number">{String(index + 1).padStart(2, "0")}</span></div><h2 className="project-card__title">{project.name}<ArrowUpRight size={15} /></h2><p>{project.description}</p><div className="tag-list">{project.stack.map((tag) => <span className="tech-tag" key={tag}>{tag}</span>)}</div><div className="project-card__actions">{project.liveUrl ? <a href={project.liveUrl} target="_blank" rel="noreferrer" className="text-link">Preview project <ArrowUpRight size={13} /></a> : <span className="text-link project-preview-note"><Clock3 size={12} />Preview link coming soon</span>}<span className="project-private"><Check size={11} /> Built with purpose</span></div></div></article>)}</div> : <EmptyState title="No projects found" text="Try a different search or browse all work." onClear={() => { setFilter("All work"); setQuery(""); }} />}
       <div className="project-footnote"><span className="project-footnote__mark"><Code2Fallback /></span><span><b>Always a work in progress.</b><small>I’m usually making something new. Check back soon for the next experiment.</small></span><Link href="/contact">Have an idea? <ArrowRight size={13} /></Link></div>
@@ -62,6 +60,7 @@ export function CertificatesPage() {
   const { items } = usePortfolioCollection("certificates", certificates);
   const [category, setCategory] = useState("All certificates");
   const [query, setQuery] = useState("");
+  const categories = ["All certificates", ...Array.from(new Set(items.map((item) => item.category).filter(Boolean)))];
   const filtered = items.filter((item) => (category === "All certificates" || item.category === category) && `${item.title} ${item.code}`.toLowerCase().includes(query.toLowerCase()));
 
   return (
@@ -69,7 +68,7 @@ export function CertificatesPage() {
       <div className="dashboard-frame certificate-dashboard"><WorkspaceSidebar active="Certificates" /><div className="certificate-dashboard__main">
       <div className="achievement-hero"><div className="achievement-hero__copy"><Eyebrow icon="Award">THE MILESTONES ALONG THE WAY</Eyebrow><h1>Your achievements<br /><span className="gradient-text">mean something.</span></h1><p>Every certificate holds a small story: the late-night lesson, the tricky bug, the day something finally clicked. Here are a few chapters.</p><div className="achievement-perks"><span><BadgeCheck size={16} /><b>Real projects</b><small>Work worth sharing</small></span><span><ArrowDownToLine size={16} /><b>Anytime access</b><small>Take them wherever</small></span><span><Share2 size={16} /><b>Built to share</b><small>Progress is better together</small></span></div></div><div className="achievement-hero__art"><div className="cert-glow" /><CertificateArt title="Full-Stack Web Development" color="blue" /></div><aside className="achievement-quote"><span>“</span><p>Skills are the real currency of the future.</p><small>— A little reminder from Coding With Bashir</small><i /></aside><div className="achievement-hero__ring" /></div>
       <div className="achievement-summary"><div><span className="summary-icon"><Award size={16} /></span><b>5<small>Earned</small></b></div><div><span className="summary-icon summary-icon--blue"><BookOpen size={16} /></span><b>2<small>In progress</small></b></div><div><span className="summary-icon summary-icon--muted"><Layers3 size={16} /></span><b>0<small>Not started</small></b></div><div className="summary-note"><span><Check size={12} />Your progress is yours to be proud of.</span><span>Updated as you learn</span></div></div>
-      <div className="cert-toolbar"><div className="filter-pills" role="tablist" aria-label="Filter certificates">{certificateCategories.map((item) => <button key={item} role="tab" aria-selected={item === category} className={`filter-pill${item === category ? " is-active" : ""}`} onClick={() => setCategory(item)}>{item}</button>)}</div><label className="search-field"><Search size={14} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search certificates…" aria-label="Search certificates" /></label><select className="filter-select" aria-label="Filter by time" defaultValue="all"><option value="all">Any time</option><option value="2025">2025</option><option value="2024">2024</option></select></div>
+      <div className="cert-toolbar"><div className="filter-pills" role="tablist" aria-label="Filter certificates">{categories.map((item) => <button key={item} role="tab" aria-selected={item === category} className={`filter-pill${item === category ? " is-active" : ""}`} onClick={() => setCategory(item)}>{item}</button>)}</div><label className="search-field"><Search size={14} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search certificates…" aria-label="Search certificates" /></label><select className="filter-select" aria-label="Filter by time" defaultValue="all"><option value="all">Any time</option><option value="2025">2025</option><option value="2024">2024</option></select></div>
       <div className="cert-results-heading"><span><span className="cert-results-dot" /> FEATURED MILESTONES</span><small>{filtered.length} certificates · earned at your pace</small></div>
       {filtered.length ? <div className="certificate-grid">{filtered.map((cert, i) => <article className="certificate-card" key={cert.slug}><Link className="certificate-card__art" href={`/certificates/${cert.slug}`} aria-label={`See ${cert.title} certificate`}><CertificateArt title={cert.title} color={cert.color} compact /><span className="certificate-card__art-open"><ArrowUpRight size={15} /></span></Link><div className="certificate-card__content"><span className={`cert-type cert-type--${cert.color}`}>{cert.category}</span><h2>{cert.title}</h2><p>Earned with care, curiosity, and a few rewarding “aha!” moments.</p><div className="certificate-card__meta"><span><Clock3 size={12} />{cert.issued}</span><span><Star size={12} />{cert.level}</span></div><div className="certificate-card__actions"><Link href={`/certificates/${cert.slug}`} className="button button--primary"><Award size={13} /> View certificate</Link><button className="icon-button" aria-label={`Share ${cert.title}`} onClick={() => copyShareLink(cert.slug)}><Share2 size={14} /></button></div></div><span className="certificate-card__index">{String(i + 1).padStart(2, "0")}</span></article>)}</div> : <EmptyState title="No certificates here yet" text="Try another filter to find your milestones." onClear={() => { setCategory("All certificates"); setQuery(""); }} />}
       <section className="achievement-cta"><div className="achievement-cta__light" /><span className="achievement-cta__icon"><Sparkles size={20} /></span><div><Eyebrow>THE NEXT ONE IS WAITING</Eyebrow><h2>Keep going. You’re doing great.</h2><p>Every skill starts somewhere. Pick up a lesson and see where it takes you.</p></div><ButtonLink href="/courses" icon="ArrowRight">Explore the courses</ButtonLink></section>
@@ -82,6 +81,7 @@ export function BlogPage() {
   const { items } = usePortfolioCollection("articles", articles);
   const [category, setCategory] = useState("All");
   const [query, setQuery] = useState("");
+  const categories = ["All", ...Array.from(new Set(items.map((item) => item.category).filter(Boolean)))];
   const filtered = items.filter((item) => (category === "All" || item.category === category) && `${item.title} ${item.excerpt}`.toLowerCase().includes(query.toLowerCase()));
   const featured = filtered[0];
 
@@ -89,7 +89,7 @@ export function BlogPage() {
     <main className="route-page wrap blog-page">
       <PageIntro eyebrow="THE DEVELOPER’S JOURNAL" icon="BookOpen" title="Ideas worth" accent="writing down." description="Tutorials, little discoveries, and notes from the journey of learning and building in public." action={<label className="search-field"><Search size={14} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search the journal…" aria-label="Search blog articles" /></label>} />
       {featured && <Link className="blog-featured" href={`/blog/${featured.slug}`}><ArticleArtwork variant={featured.variant} /><div className="blog-featured__copy"><span className="blog-featured__kicker"><span /> THE LATEST NOTE</span><div className="blog-featured__meta"><span>{featured.category}</span><span>{featured.date}</span><span><Clock3 size={11} />{featured.readTime}</span></div><h2>{featured.title}</h2><p>{featured.excerpt} A few thoughts, practical examples, and the little details that made the difference.</p><span className="blog-featured__link">Read the article <ArrowRight size={14} /></span></div><span className="blog-featured__spark"><Sparkles size={16} /></span></Link>}
-      <div className="blog-toolbar"><div className="filter-pills" role="tablist" aria-label="Filter articles">{articleCategories.map((item) => <button key={item} role="tab" aria-selected={category === item} className={`filter-pill${category === item ? " is-active" : ""}`} onClick={() => setCategory(item)}>{item}</button>)}</div><span className="blog-result-count">{filtered.length} notes & stories</span></div>
+      <div className="blog-toolbar"><div className="filter-pills" role="tablist" aria-label="Filter articles">{categories.map((item) => <button key={item} role="tab" aria-selected={category === item} className={`filter-pill${category === item ? " is-active" : ""}`} onClick={() => setCategory(item)}>{item}</button>)}</div><span className="blog-result-count">{filtered.length} notes & stories</span></div>
       <div className="blog-grid">{filtered.slice(1).map((article) => <Link className="blog-card" href={`/blog/${article.slug}`} key={article.slug}><ArticleArtwork variant={article.variant} /><div className="blog-card__meta"><span>{article.category}</span><span>{article.date}</span></div><h2>{article.title}<ArrowUpRight size={14} /></h2><p>{article.excerpt}</p><span className="blog-card__read"><span><Clock3 size={12} />{article.readTime}</span><span>Read story <ArrowRight size={13} /></span></span></Link>)}</div>
       {!filtered.length && <EmptyState title="Nothing in the notebook yet" text="Try a different search or category." onClear={() => { setCategory("All"); setQuery(""); }} />}
       <div className="blog-endnote"><span className="blog-endnote__spark"><Sparkles size={16} /></span><span>Curiosity looks good on you. <b>Come back soon for the next note.</b></span></div>
@@ -103,6 +103,23 @@ export function ContactPage() {
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [feedback, setFeedback] = useState("");
   const [apiMode, setApiMode] = useState("");
+
+  useEffect(() => {
+    const rawBrief = new URLSearchParams(window.location.search).get("brief");
+    if (!rawBrief) return;
+    try {
+      const brief = JSON.parse(rawBrief) as { services?: string[]; timeline?: string; estimate?: string };
+      const selected = Array.isArray(brief.services) ? brief.services.filter((item) => typeof item === "string").slice(0, 8) : [];
+      if (!selected.length) return;
+      setForm((current) => ({
+        ...current,
+        subject: `Project conversation: ${selected.slice(0, 2).join(" + ")}`.slice(0, 160),
+        message: `Hi Bashir,\n\nI’d like to explore a project together. I’m interested in: ${selected.join(", ")}.\n\nPreferred timing: ${String(brief.timeline || "Flexible").slice(0, 80)}.\nSuggested first milestone: ${String(brief.estimate || "Let’s discuss the scope").slice(0, 100)}.\n\nA little more about what I have in mind:\n`,
+      }));
+    } catch {
+      // Ignore malformed query parameters and leave the contact form blank.
+    }
+  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setErrors({}); setFeedback(""); setStatus("sending");

@@ -11,7 +11,7 @@ export function SiteFooter() {
           <p>Build boldly. Learn out loud.<br />Make something that matters.</p>
         </div>
         <div className="site-footer__links">
-          <div><span className="footer-label">Explore</span><Link href="/courses">Courses</Link><Link href="/projects">Projects</Link><Link href="/certificates">Certificates</Link></div>
+          <div><span className="footer-label">Explore</span><Link href="/about">About Bashir</Link><Link href="/services">Services</Link><Link href="/resources">Resources</Link><Link href="/courses">Courses</Link><Link href="/projects">Projects</Link><Link href="/certificates">Certificates</Link><Link href="/admin">Creator studio</Link></div>
           <div><span className="footer-label">Say hello</span><Link href="/blog">From the blog</Link><Link href="/contact">Contact Bashir <ArrowUpRight size={12} /></Link><a href="mailto:hello@codingwithbashir.dev">Email me <ArrowUpRight size={12} /></a></div>
         </div>
         <div className="site-footer__social"><span className="footer-label">Around the web</span><div className="social-links"><a href="https://github.com/CodingWithBashir" target="_blank" rel="noreferrer" aria-label="GitHub"><Github size={16} /></a><a href="https://youtube.com/@CodingWithBashir" target="_blank" rel="noreferrer" aria-label="YouTube"><Youtube size={16} /></a><a href="https://linkedin.com/" target="_blank" rel="noreferrer" aria-label="LinkedIn"><Linkedin size={16} /></a></div><span className="availability"><i /> Available for thoughtful projects</span></div>

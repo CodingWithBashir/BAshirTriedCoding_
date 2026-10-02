@@ -114,6 +114,8 @@ kbd { padding: 2px 5px; border: 1px solid rgba(173,180,211,.2); border-radius: 5
 .hero-surname { color: #cdd0e1; font-size: .71em; font-weight: 500; letter-spacing: -3px; }
 .hero-role { margin: 15px 0 8px; color: #e8e8f6; font-size: 13px; font-weight: 550; letter-spacing: .06px; }
 .hero-role span { padding: 0 4px; color: #9474e8; }
+.hero-role .hero-role__dynamic { display: inline-block; min-width: 128px; padding: 0; color: #bd9fff; transition: opacity .2s; }
+.hero-role > i { padding-inline: 4px; color: #8f78da; font-style: normal; }
 .hero-summary { max-width: 425px; margin: 0; color: #9ba4bc; font-size: 12px; line-height: 1.85; }
 .hero-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 21px; }
 .hero-cta .button { min-height: 41px; }

@@ -1,13 +1,13 @@
 import Link from "next/link";
 import {
   ArrowDownRight, ArrowRight, ArrowUpRight, Atom, BrainCircuit, Braces, BriefcaseBusiness,
-  Code2, CodeXml, Cpu, Database, Gamepad2, Github, Layers3, Leaf, Mail, MonitorPlay,
+  Code2, CodeXml, Compass, Cpu, Database, Gamepad2, Github, Layers3, Leaf, Mail, MonitorPlay,
   Blocks, MapPin, PanelsTopLeft, Palette, Plug, Sparkles, Terminal, UserRound, Webhook, type LucideIcon,
 } from "lucide-react";
 
 const iconMap: Record<string, LucideIcon> = {
   ArrowDownRight, ArrowRight, ArrowUpRight, Atom, BrainCircuit, Braces, BriefcaseBusiness,
-  Code2, CodeXml, Cpu, Database, Gamepad2, Github, Layers3, Leaf, Mail, MonitorPlay,
+  Code2, CodeXml, Compass, Cpu, Database, Gamepad2, Github, Layers3, Leaf, Mail, MonitorPlay,
   Blocks, MapPin, PanelsTopLeft, Palette, Plug, Sparkles, Terminal, UserRound, Webhook,
 };
 

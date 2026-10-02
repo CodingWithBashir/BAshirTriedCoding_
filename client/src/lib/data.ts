@@ -133,6 +133,7 @@ export type Article = {
   readTime: string;
   excerpt: string;
   variant: string;
+  body?: string;
 };
 
 export const articles: Article[] = [

@@ -8,10 +8,13 @@ import {
   Copy, Download, DownloadCloud, FileCheck2, LockKeyhole, Share2, Sparkles,
 } from "lucide-react";
 import { articles, certificates } from "@/lib/data";
+import { usePortfolioCollection } from "@/lib/use-portfolio-collection";
 import { ButtonLink, Eyebrow } from "@/components/ui";
 import { ArticleArtwork, CertificateArt } from "@/components/visuals";
 
-const articleSections: Record<string, { intro: string; sections: Array<{ title: string; body: string[]; code?: string }> }> = {
+type ArticleContent = { intro: string; sections: Array<{ title: string; body: string[]; code?: string }> };
+
+const articleSections: Record<string, ArticleContent> = {
   "getting-started-with-react": { intro: "The first time I opened a React project, I remember thinking there was a lot to take in. Then I learned to think in small pieces. A component is just a little part of the page you can understand, reuse, and make better.", sections: [{ title: "Start with one component", body: ["React is a JavaScript library for building interfaces out of components. A component can be a button, a card, a navigation bar — or an entire page made from smaller pieces.", "Instead of asking ‘How do I build this whole page?’, ask ‘What’s one small piece I can build first?’ That shift makes the whole process feel a lot lighter."] , code: "function Welcome() {\n  return <h1>It starts right here.</h1>;\n}" }, { title: "Give components a little data", body: ["Props let you pass information from one component to another. With props, one reusable card can show different titles, different images, and different ideas without repeating itself."] , code: "function ProjectCard({ title }) {\n  return <article>{title}</article>;\n}" }, { title: "Make one thing you care about", body: ["Follow a tutorial, then close it for a while and try the idea your own way. Build a small personal page, a favourite recipe list, or a learning tracker. The goal isn't perfection — it’s making something that belongs to you."] }] },
   "deploying-full-stack-app-render": { intro: "There is something special about sharing a link to something you made and watching it open on someone else’s screen. Deployment turns your local experiment into a real, reachable thing.", sections: [{ title: "Prepare before you deploy", body: ["Make sure your app builds locally and move secrets into environment variables. A .env file should stay on your machine; production platforms give you a secure place to add each key separately.", "I like to write down the app’s start command and the environment variables it needs before opening the hosting dashboard."] }, { title: "Connect your repository", body: ["Render can build from a Git repository and redeploy when you push. Keep the build and start commands clear, and remember that a full-stack project may need a separate frontend, API, and database service."] , code: "Build command   npm install && npm run build\nStart command   npm start\nEnvironment     Add secrets in the dashboard" }, { title: "Open the link, then look closely", body: ["After it is live, click through the real deployed version on your phone and laptop. Check the form, check the API, and check the console. Each deploy teaches you something about how the pieces fit together."] }] },
   "free-tools-for-developers": { intro: "A good toolbox does not have to be expensive. A few generous free plans — and a habit of using tools thoughtfully — go a long way when you are just getting started.", sections: [{ title: "Make a little room for design", body: ["Figma’s free plan is a lovely place to sketch an idea before writing code. A few rectangles and a type scale can save you a lot of uncertainty once you get to the browser."] }, { title: "Build with a friendly setup", body: ["VS Code has a strong free extension library. GitHub gives you a home for your code. Browser developer tools make layout, colours, network requests, and accessibility much easier to inspect."] }, { title: "Choose what fits the project", body: ["Free tiers change and a tool that is right for one app may not be right for another. Read the limits, keep backups, and resist signing up for every shiny thing at once. The simplest useful setup is often the best one."] }] },
@@ -22,9 +25,20 @@ const articleSections: Record<string, { intro: string; sections: Array<{ title: 
 
 export function BlogArticlePage() {
   const params = useParams<{ slug: string }>();
-  const article = articles.find((item) => item.slug === params.slug);
+  const { items: liveArticles } = usePortfolioCollection("articles", articles);
+  const article = liveArticles.find((item) => item.slug === params.slug);
   if (!article) return <NotFound kind="article" />;
-  const content = articleSections[article.slug] ?? articleSections["getting-started-with-react"];
+  const authoredParagraphs = article.body?.split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean) ?? [];
+  const content: ArticleContent = article.body?.trim()
+    ? { intro: article.excerpt, sections: authoredParagraphs.map((paragraph, index) => ({ title: `Notebook point ${index + 1}`, body: [paragraph] })) }
+    : articleSections[article.slug] ?? {
+    intro: article.excerpt,
+    sections: [
+      { title: "The idea", body: [article.excerpt, "Start with the smallest question you can answer. A clear first step makes a new concept easier to understand, test, and improve."] },
+      { title: "Try it for yourself", body: ["Turn the idea into a small experiment. Write down what you expected, what you observed, and what you would change on the next pass."] },
+      { title: "Carry the lesson forward", body: ["A useful lesson is one you can apply again. Keep the notes close, share what worked, and let the next project build on this one."] },
+    ],
+  };
 
   return (
     <main className="route-page wrap article-route"><Link className="breadcrumb-back" href="/blog"><ArrowLeft size={13} /> Back to the notebook <span>/</span> <span>{article.category}</span></Link><section className="article-hero"><ArticleArtwork variant={article.variant} /><div className="article-hero__overlay" /><div className="article-hero__copy"><div className="article-meta"><span>{article.category}</span><span>{article.date}</span><span><Clock3 size={12} />{article.readTime}</span></div><h1>{article.title}</h1><p>{article.excerpt}</p><div className="article-byline"><span className="byline-avatar">BH</span><span><b>Bashir Hussein</b><small>Builder, learner & note taker</small></span></div></div><span className="article-hero__spark"><Sparkles size={16} /></span></section>
@@ -35,7 +49,8 @@ export function BlogArticlePage() {
 
 export function CertificateDetailPage() {
   const params = useParams<{ slug: string }>();
-  const certificate = certificates.find((item) => item.slug === params.slug);
+  const { items: liveCertificates } = usePortfolioCollection("certificates", certificates);
+  const certificate = liveCertificates.find((item) => item.slug === params.slug);
   const [copied, setCopied] = useState(false);
   if (!certificate) return <NotFound kind="certificate" />;
 
