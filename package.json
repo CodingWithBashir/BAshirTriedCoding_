@@ -1,0 +1,16 @@
+{
+  "name": "coding-with-bashir-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A polished portfolio and learning platform for Coding With Bashir.",
+  "scripts": {
+    "dev": "concurrently -k -n API,WEB -c magenta,cyan \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "build": "npm --prefix client run build",
+    "start": "concurrently -k -n API,WEB -c magenta,cyan \"npm --prefix server start\" \"npm --prefix client start\"",
+    "typecheck": "npm --prefix client run typecheck",
+    "test": "npm --prefix server test"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
+}
