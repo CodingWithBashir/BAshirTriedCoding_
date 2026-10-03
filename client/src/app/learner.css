@@ -1,4 +1,23 @@
 /* Learner-account surfaces: real records from the authenticated account. */
+.certificate-art__course-row { width: 95%; display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 4px; }
+.certificate-art__course-icon { width: 17px; height: 17px; display: grid; flex: 0 0 auto; place-items: center; border: 1px solid rgba(117, 80, 198, .2); border-radius: 5px; background: linear-gradient(145deg, #f2eaff, #e1d7ff); color: #6b4db2; }
+.certificate-art__course-icon--orange { background: #fff0e7; color: #bd613a; }
+.certificate-art__course-icon--yellow { background: #fff7d9; color: #947519; }
+.certificate-art__course-icon--cyan,.certificate-art__course-icon--blue { background: #e4f8ff; color: #257d9d; }
+.certificate-art__course-icon--green,.certificate-art__course-icon--emerald { background: #e8f7eb; color: #39804c; }
+.certificate-art__course-icon--pink { background: #ffedf5; color: #aa4e7b; }
+.certificate-art__course-icon--violet { background: #f0eaff; color: #6b4db2; }
+.certificate-art__course { min-width: 0; margin-top: 0; text-align: left; }
+.certificate-art--compact .certificate-art__course-row { gap: 3px; margin-top: 3px; }
+.certificate-art--compact .certificate-art__course-icon { width: 13px; height: 13px; border-radius: 4px; }
+.certificate-art--compact .certificate-art__course-icon svg { width: 9px; height: 9px; }
+.workspace-user__avatar img,.profile-banner__avatar img { display: block; width: 100%; height: 100%; }
+.profile-photo-input { display: none; }
+.profile-photo-button { min-height: 27px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 8px; border: 1px solid rgba(179,163,239,.19); border-radius: 7px; background: rgba(7,10,23,.4); color: #d0c2f9; font: inherit; font-size: 8px; cursor: pointer; transition: border-color .18s, background .18s; }
+.profile-photo-button:hover:not(:disabled) { border-color: rgba(179,163,239,.48); background: rgba(125,87,222,.16); }
+.profile-photo-button:disabled { cursor: wait; opacity: .7; }
+.profile-photo-button--remove { color: #c3a4b9; }
+.profile-banner__info > .profile-photo-error { margin: 6px 0 0; color: #ffadbb; font-size: 8px; }
 .workspace-user__avatar { display: grid; place-items: center; color: #f4efff; font: 700 11px var(--font-display); }
 .workspace-signout { min-height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 7px; border: 0; border-radius: 6px; background: transparent; color: #8791aa; font: inherit; font-size: 8px; text-align: left; cursor: pointer; }
 .workspace-signout:hover { background: rgba(124, 87, 219, .08); color: #c2a9ff; }

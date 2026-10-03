@@ -80,6 +80,7 @@ const LearnerSchema = new Schema({
   name: { type: String, required: true, trim: true, maxlength: 80 },
   email: { type: String, required: true, trim: true, lowercase: true, unique: true, maxlength: 160 },
   passwordHash: { type: String, required: true, select: false },
+  profileImage: { type: String, default: "", select: false, maxlength: 300000 },
   active: { type: Boolean, default: true },
   lastLoginAt: { type: Date, default: null },
 }, commonOptions);
@@ -99,6 +100,8 @@ const LearnerCertificateSchema = new Schema({
   learnerId: { type: Schema.Types.ObjectId, ref: "Learner", required: true },
   courseSlug: { type: String, required: true, trim: true, lowercase: true, maxlength: 140 },
   courseTitle: { type: String, required: true, trim: true, maxlength: 160 },
+  courseIcon: { type: String, default: "Award", maxlength: 50 },
+  courseColor: { type: String, default: "violet", maxlength: 32 },
   lessonCount: { type: Number, required: true, min: 1, max: 120 },
   recipientName: { type: String, required: true, trim: true, maxlength: 80 },
   certificateNumber: { type: String, required: true, unique: true, trim: true, maxlength: 40 },

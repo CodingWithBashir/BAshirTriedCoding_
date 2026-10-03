@@ -324,7 +324,7 @@ export async function listAuditEvents(limit = 100) {
 export async function findLearnerByEmail(email) {
   const normalized = String(email).trim().toLowerCase();
   if (mongoConnected) {
-    const learner = await models.learners.findOne({ email: normalized }).select("+passwordHash").lean();
+    const learner = await models.learners.findOne({ email: normalized }).select("+passwordHash +profileImage").lean();
     return plainRecord(learner);
   }
   const state = await readLocalState();
@@ -333,7 +333,7 @@ export async function findLearnerByEmail(email) {
 
 export async function findLearnerById(id) {
   if (mongoConnected) {
-    const learner = await models.learners.findById(id).select("+passwordHash").lean();
+    const learner = await models.learners.findById(id).select("+passwordHash +profileImage").lean();
     return plainRecord(learner);
   }
   const state = await readLocalState();
@@ -352,7 +352,7 @@ export async function createLearner(learner) {
 
 export async function updateLearner(id, changes) {
   if (mongoConnected) {
-    return plainRecord(await models.learners.findByIdAndUpdate(id, { $set: changes }, { new: true, runValidators: true }).select("+passwordHash").lean());
+    return plainRecord(await models.learners.findByIdAndUpdate(id, { $set: changes }, { new: true, runValidators: true }).select("+passwordHash +profileImage").lean());
   }
   return mutateLocal((state) => {
     const learner = state.learners.find((item) => String(item.id) === String(id));
@@ -371,26 +371,43 @@ export async function listLearnerProgress(learnerId) {
   return state.learnerProgress.filter((row) => String(row.learnerId) === String(learnerId));
 }
 
-export async function listLearnerCertificates(learnerId) {
-  if (mongoConnected) {
-    const rows = await models.learnerCertificates.find({ learnerId }).sort({ issuedAt: -1 }).lean();
-    return rows.map(plainRecord);
+async function withCourseMark(certificate) {
+  if (!certificate) return null;
+  let course = null;
+  if ((!certificate.courseIcon || !certificate.courseColor) && certificate.courseSlug) {
+    course = await findBySlug("courses", certificate.courseSlug);
   }
-  const state = await readLocalState();
-  return state.learnerCertificates
-    .filter((row) => String(row.learnerId) === String(learnerId))
-    .sort((a, b) => new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime());
+  return {
+    ...certificate,
+    courseIcon: certificate.courseIcon || course?.icon || "Award",
+    courseColor: certificate.courseColor || course?.color || "violet",
+  };
+}
+
+export async function listLearnerCertificates(learnerId) {
+  let rows;
+  if (mongoConnected) {
+    rows = (await models.learnerCertificates.find({ learnerId }).sort({ issuedAt: -1 }).lean()).map(plainRecord);
+  } else {
+    const state = await readLocalState();
+    rows = state.learnerCertificates
+      .filter((row) => String(row.learnerId) === String(learnerId))
+      .sort((a, b) => new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime());
+  }
+  return Promise.all(rows.map(withCourseMark));
 }
 
 export async function findLearnerCertificate(identifier, learnerId) {
+  let certificate;
   if (mongoConnected) {
     const key = String(identifier);
     const filter = /^[a-f\d]{24}$/i.test(key) ? { _id: key } : { certificateNumber: key };
-    const certificate = await models.learnerCertificates.findOne({ ...filter, learnerId }).lean();
-    return plainRecord(certificate);
+    certificate = plainRecord(await models.learnerCertificates.findOne({ ...filter, learnerId }).lean());
+  } else {
+    const state = await readLocalState();
+    certificate = state.learnerCertificates.find((row) => String(row.learnerId) === String(learnerId) && (String(row.id) === String(identifier) || row.certificateNumber === identifier)) ?? null;
   }
-  const state = await readLocalState();
-  return state.learnerCertificates.find((row) => String(row.learnerId) === String(learnerId) && (String(row.id) === String(identifier) || row.certificateNumber === identifier)) ?? null;
+  return withCourseMark(certificate);
 }
 
 export async function findPublicCertificateByNumber(certificateNumber) {
@@ -398,19 +415,22 @@ export async function findPublicCertificateByNumber(certificateNumber) {
   let certificate;
   if (mongoConnected) {
     certificate = await models.learnerCertificates.findOne({ certificateNumber: normalized })
-      .select("courseTitle lessonCount recipientName certificateNumber issuedAt")
+      .select("courseSlug courseTitle courseIcon courseColor lessonCount recipientName certificateNumber issuedAt")
       .lean();
   } else {
     const state = await readLocalState();
     certificate = state.learnerCertificates.find((row) => row.certificateNumber === normalized) ?? null;
   }
   if (!certificate) return null;
+  const markedCertificate = await withCourseMark(certificate);
   return {
-    courseTitle: certificate.courseTitle,
-    lessonCount: certificate.lessonCount,
-    recipientName: certificate.recipientName,
-    certificateNumber: certificate.certificateNumber,
-    issuedAt: certificate.issuedAt,
+    courseTitle: markedCertificate.courseTitle,
+    courseIcon: markedCertificate.courseIcon,
+    courseColor: markedCertificate.courseColor,
+    lessonCount: markedCertificate.lessonCount,
+    recipientName: markedCertificate.recipientName,
+    certificateNumber: markedCertificate.certificateNumber,
+    issuedAt: markedCertificate.issuedAt,
   };
 }
 
@@ -440,7 +460,7 @@ export async function completeLearnerLesson(learner, course, lessonIndex) {
       try {
         certificate = await models.learnerCertificates.findOneAndUpdate(
           filter,
-          { $setOnInsert: { courseTitle: course.title, lessonCount, recipientName: learner.name, certificateNumber: newCertificateNumber(), issuedAt: completedAt } },
+          { $setOnInsert: { courseTitle: course.title, courseIcon: course.icon || "Award", courseColor: course.color || "violet", lessonCount, recipientName: learner.name, certificateNumber: newCertificateNumber(), issuedAt: completedAt } },
           { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true },
         ).lean();
       } catch (error) {
@@ -450,10 +470,10 @@ export async function completeLearnerLesson(learner, course, lessonIndex) {
       await models.learnerProgress.updateOne(filter, { $set: { certificateId: certificate._id, completedAt } });
       progress = await models.learnerProgress.findOne(filter).lean();
     }
-    return { progress: plainRecord(progress), certificate: plainRecord(certificate) };
+    return { progress: plainRecord(progress), certificate: await withCourseMark(plainRecord(certificate)) };
   }
 
-  return mutateLocal((state) => {
+  const result = await mutateLocal((state) => {
     let progress = state.learnerProgress.find((row) => String(row.learnerId) === String(learner.id) && row.courseSlug === course.slug);
     if (!progress) {
       progress = {
@@ -474,7 +494,8 @@ export async function completeLearnerLesson(learner, course, lessonIndex) {
       certificate = state.learnerCertificates.find((row) => String(row.learnerId) === String(learner.id) && row.courseSlug === course.slug) ?? null;
       if (!certificate) {
         certificate = {
-          id: randomUUID(), learnerId: String(learner.id), courseSlug: course.slug, courseTitle: course.title, lessonCount,
+          id: randomUUID(), learnerId: String(learner.id), courseSlug: course.slug, courseTitle: course.title,
+          courseIcon: course.icon || "Award", courseColor: course.color || "violet", lessonCount,
           recipientName: learner.name, certificateNumber: newCertificateNumber(), issuedAt: progress.completedAt,
         };
         state.learnerCertificates.push(certificate);
@@ -483,4 +504,5 @@ export async function completeLearnerLesson(learner, course, lessonIndex) {
     }
     return { progress, certificate };
   });
+  return { ...result, certificate: await withCourseMark(result.certificate) };
 }

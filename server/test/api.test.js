@@ -1,6 +1,6 @@
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -77,6 +77,34 @@ test("learner accounts own saved lesson progress and receive a certificate after
   const cookie = signup.headers.get("set-cookie")?.split(";")[0];
   assert.ok(cookie?.startsWith("cwb_learner_session="));
 
+  const privatePhoto = await fetch(`${base}/api/learner/profile`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ profileImage: "data:image/jpeg;base64,/9j/AA==" }),
+  });
+  assert.equal(privatePhoto.status, 401);
+  const savedPhoto = await fetch(`${base}/api/learner/profile`, {
+    method: "PATCH",
+    headers: { cookie, "content-type": "application/json" },
+    body: JSON.stringify({ profileImage: "data:image/jpeg;base64,/9j/AA==" }),
+  });
+  const savedPhotoBody = await savedPhoto.json();
+  assert.equal(savedPhoto.status, 200);
+  assert.equal(savedPhotoBody.user.profileImage, "data:image/jpeg;base64,/9j/AA==");
+  assert.equal("passwordHash" in savedPhotoBody.user, false);
+  const badPhoto = await fetch(`${base}/api/learner/profile`, {
+    method: "PATCH",
+    headers: { cookie, "content-type": "application/json" },
+    body: JSON.stringify({ profileImage: "data:image/png;base64,AAAA" }),
+  });
+  assert.equal(badPhoto.status, 400);
+  const clearedPhoto = await fetch(`${base}/api/learner/profile`, {
+    method: "PATCH",
+    headers: { cookie, "content-type": "application/json" },
+    body: JSON.stringify({ profileImage: null }),
+  });
+  assert.equal((await clearedPhoto.json()).user.profileImage, "");
+
   const privateBeforeSignIn = await fetch(`${base}/api/learner/progress`);
   assert.equal(privateBeforeSignIn.status, 401);
 
@@ -100,12 +128,23 @@ test("learner accounts own saved lesson progress and receive a certificate after
   assert.equal(result.progress.completedLessonIndexes.length, course.lessons);
   assert.equal(result.progress.completedAt != null, true);
   assert.equal(result.certificate.courseSlug, course.slug);
+  assert.equal(result.certificate.courseIcon, course.icon);
+  assert.equal(result.certificate.courseColor, course.color);
   assert.equal(result.certificate.recipientName, "Amina Uwimana");
   assert.equal(result.certificate.lessonCount, course.lessons);
+
+  // Existing awards without the newer course-mark snapshot still resolve their course's icon and color.
+  const localStore = JSON.parse(await readFile(process.env.LOCAL_STORE_PATH, "utf8"));
+  const persistedCertificate = localStore.learnerCertificates.find((item) => item.certificateNumber === result.certificate.certificateNumber);
+  delete persistedCertificate.courseIcon;
+  delete persistedCertificate.courseColor;
+  await writeFile(process.env.LOCAL_STORE_PATH, JSON.stringify(localStore));
 
   const earned = await fetch(`${base}/api/learner/certificates`, { headers: { cookie } });
   const earnedItems = (await earned.json()).items;
   assert.equal(earnedItems.length, 1);
+  assert.equal(earnedItems[0].courseIcon, course.icon);
+  assert.equal(earnedItems[0].courseColor, course.color);
   assert.equal(earnedItems[0].certificateNumber, result.certificate.certificateNumber);
   const ownCertificate = await fetch(`${base}/api/learner/certificates/${result.certificate.id}`, { headers: { cookie } });
   assert.equal(ownCertificate.status, 200);
@@ -113,6 +152,8 @@ test("learner accounts own saved lesson progress and receive a certificate after
   const verificationBody = await verification.json();
   assert.equal(verification.status, 200);
   assert.equal(verificationBody.item.recipientName, "Amina Uwimana");
+  assert.equal(verificationBody.item.courseIcon, course.icon);
+  assert.equal(verificationBody.item.courseColor, course.color);
   assert.equal(verificationBody.item.certificateNumber, result.certificate.certificateNumber);
   assert.equal("learnerId" in verificationBody.item, false);
   assert.equal("passwordHash" in verificationBody.item, false);

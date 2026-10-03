@@ -61,6 +61,18 @@ function authUnavailable(response) {
   return true;
 }
 
+function validateProfileImage(value) {
+  if (value === null || value === "") return "";
+  if (typeof value !== "string" || value.length > 300_000) throw badRequest("Choose a smaller profile photo (maximum 220 KB after resizing).", 413);
+  const match = /^data:image\/jpeg;base64,([A-Za-z0-9+/]+={0,2})$/.exec(value);
+  if (!match) throw badRequest("Profile photos must be uploaded as JPEG images.");
+  const bytes = Buffer.from(match[1], "base64");
+  if (bytes.length < 4 || bytes.length > 220_000 || bytes.toString("base64") !== match[1] || bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff) {
+    throw badRequest("That profile photo is not a valid JPEG or is too large.");
+  }
+  return value;
+}
+
 async function requireLearner(request, response, next) {
   try {
     const learner = await getSessionLearner(request);
@@ -119,6 +131,13 @@ learnerRouter.get("/verify/certificates/:certificateNumber", asyncRoute(async (r
   const item = await findPublicCertificateByNumber(request.params.certificateNumber);
   if (!item) throw badRequest("No awarded certificate matches that number.", 404);
   response.json({ item });
+}));
+
+learnerRouter.patch("/learner/profile", requireLearner, asyncRoute(async (request, response) => {
+  const profileImage = validateProfileImage(request.body?.profileImage);
+  const learner = await updateLearner(request.learner.id, { profileImage });
+  if (!learner) throw badRequest("Your learner account could not be found.", 404);
+  response.json({ ok: true, user: publicLearner(learner) });
 }));
 
 learnerRouter.get("/learner/progress", requireLearner, asyncRoute(async (request, response) => {

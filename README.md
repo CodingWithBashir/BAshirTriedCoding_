@@ -209,7 +209,7 @@ Mongoose collections:
 
 Starter content is initialized once with insert-only upserts: updating or deleting portfolio records in the admin workspace does not reset them to seed values at the next start. The local preview adapter stores content, messages, users, and audit entries in the ignored `server/data/store.json`, using atomic writes and a serialized mutation queue. `LOCAL_STORE_PATH` can point tests to an isolated temporary file.
 
-Use MongoDB for any persistent deployment. A Render free service can restart or spin down, and its local filesystem is not the durable data store for this app. In development, the API remains usable with local preview data. In production, the health endpoint returns `503` and data routes fail closed until MongoDB is connected; no contact or portfolio writes are accepted into an ephemeral local file.
+Use MongoDB for any persistent deployment. The included Render Blueprint selects the paid `starter` web-service plan so the API does not spin down while idle; Render charges for paid compute, so review the current plan price before syncing or upgrading an existing service. The Blueprint setting does not change an already-created Render service until you sync/apply it. Free Render services can spin down, and the local filesystem is not durable storage. In development, the API remains usable with local preview data. In production, the health endpoint returns `503` and data routes fail closed until MongoDB is connected; no contact or portfolio writes are accepted into an ephemeral local file.
 
 ## Local setup
 
@@ -262,14 +262,14 @@ To enable a local owner account, set a unique `JWT_SECRET` (at least 32 bytes), 
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `API_INTERNAL_URL` | Required on Vercel | Public HTTPS base URL for the Render API, without a trailing slash, e.g. `https://coding-with-bashir-api.onrender.com` |
+| `API_INTERNAL_URL` | Optional on Vercel | Public HTTPS base URL for the Render API, without a trailing slash. Defaults to `https://coding-with-bashir-api.onrender.com` when building/running on Vercel; set this to override that service URL. |
 
-`API_INTERNAL_URL` is read by Next.js server configuration and is not a `NEXT_PUBLIC_*` browser variable. In local development it defaults to `http://127.0.0.1:4000`.
+`API_INTERNAL_URL` is read by Next.js server configuration and is not a `NEXT_PUBLIC_*` browser variable. It is no longer required to build on Vercel. In local development it defaults to `http://127.0.0.1:4000`.
 
 ## Deploy the API to Render
 
 1. **Create MongoDB first.** Create a MongoDB Atlas database and a database user with access only to this app’s database. Configure Atlas network access for the Render service according to your plan/security policy.
-2. **Create the Render service.** Connect the GitHub repository and use the included `render.yaml` Blueprint, or create a Node web service manually with root directory `server/`, build command `npm ci && npm run build`, start command `npm start`, and health-check path `/api/health`.
+2. **Create the Render service.** Connect the GitHub repository and use the included `render.yaml` Blueprint, or create a Node web service manually with root directory `server/`, build command `npm ci && npm run build`, start command `npm start`, health-check path `/api/health`, and a paid always-on plan. The Blueprint uses paid `starter` compute to stay awake without periodic wake-up requests. If you already have a free service, syncing the Blueprint or changing its plan is a separate deployment action and can incur charges; confirm Render's current pricing and the service plan before applying it. A free plan cannot guarantee always-on availability without inbound traffic.
 3. **Set service secrets.** Provide `MONGODB_URI`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`. `render.yaml` generates `JWT_SECRET`; keep the generated secret private. Set `ADMIN_PASSWORD` to a unique password with at least 12 characters.
 4. **Set CORS origins.** Set `FRONTEND_ORIGINS` to the exact Vercel production origin(s), comma-separated if needed. Add exact preview origins only if you call the API directly from those browser origins. Do not use `*` with credentialed admin sessions.
 5. **Deploy and inspect health.** `GET https://<render-service>.onrender.com/api/health` should return `ok: true` and `database: "mongodb"`. A `503` means persistent storage is not ready; check `MONGODB_URI`, Atlas network rules, and service logs before serving the frontend.
@@ -281,7 +281,7 @@ To enable a local owner account, set a unique `JWT_SECRET` (at least 32 bytes), 
 
 1. Import the same GitHub repository into Vercel.
 2. Set **Root Directory** to `client` and keep the Next.js framework preset. Build command: `npm run build`; install command: `npm ci`.
-3. Add `API_INTERNAL_URL` to the Vercel **Production**, **Preview**, and **Development** environments that you intend to use. Set it to the Render API’s HTTPS base URL with no trailing slash. Vercel builds fail with a clear error if this value is missing.
+3. Optionally set `API_INTERNAL_URL` in Vercel to override the configured default Render API URL. The production build succeeds without this variable; on Vercel the rewrite defaults to `https://coding-with-bashir-api.onrender.com`.
 4. Deploy. The Next.js rewrite proxies `/api/*` through Vercel to Render; browser code continues to use same-origin `/api` URLs. Do not hardcode `localhost`, a Render private address, or an API secret into client-side code.
 5. Add the final Vercel domain to Render’s `FRONTEND_ORIGINS` if direct browser-to-API calls are introduced. The current UI uses the same-origin rewrite; exact CORS origins still provide the safe configuration for future direct calls.
 6. Verify the Vercel site, `/api/health` through the Vercel domain, `/projects`, and `/services`. Create a learner account, complete a course’s lessons, and verify the progress and awarded certificate remain after signing out/in and after a redeploy. Also verify the bootstrap owner can sign in at `/admin`.
@@ -333,6 +333,6 @@ An unauthenticated admin session check should return a JSON setup/authentication
 - Learner and admin passwords use Node’s scrypt implementation with per-password random salts. Separate HttpOnly, SameSite=Lax cookies are Secure in production; learner sessions expire after 14 days and admin sessions after eight hours.
 - There is no public admin signup, no wildcard credentialed CORS, and no role-only frontend security; API authorization is enforced server-side.
 - The local JSON store is a development/preview fallback only. Production data routes return `503` until MongoDB is connected, rather than accepting writes to an ephemeral Render filesystem.
-- Learner registration, sign-in, per-account course progress, and account-linked course-completion certificates are implemented. Lesson materials and the assistant’s replies remain lightweight in-app learning prototypes; there is no hosted video backend, payment flow, or external AI provider.
+- Learner registration, sign-in, per-account course progress, and account-linked course-completion certificates are implemented. Course certificates carry the learner’s account name and a vector course mark; legacy awards resolve their mark from the course record. Learners can upload or remove a cropped profile photo only from the Profile page; photos are resized to JPEG before being stored privately on the account. Lesson materials and the assistant’s replies remain lightweight in-app learning prototypes; there is no hosted video backend, payment flow, or external AI provider.
 - Admin content fields intentionally match the current portfolio schemas. Large media uploads, email delivery, password-reset emails, and MFA/SSO are not included in this release.
 - Before public production launch, configure real contact/social details, a custom domain, strong unique secrets, database backups, and a privacy/retention policy for contact messages.

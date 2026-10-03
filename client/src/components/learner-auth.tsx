@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { usePathname, useRouter } from "next/navigation";
 import styles from "./learner-auth.module.css";
 
-export type LearnerUser = { id: string; name: string; email: string; active?: boolean; lastLoginAt?: string | null };
+export type LearnerUser = { id: string; name: string; email: string; profileImage?: string | null; active?: boolean; lastLoginAt?: string | null };
 export type CourseProgress = {
   id?: string;
   courseSlug: string;
@@ -19,6 +19,8 @@ export type EarnedCertificate = {
   id: string;
   courseSlug: string;
   courseTitle: string;
+  courseIcon: string;
+  courseColor: string;
   lessonCount: number;
   recipientName: string;
   certificateNumber: string;
@@ -35,6 +37,7 @@ type AuthContextValue = {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  updateProfileImage: (profileImage: string | null) => Promise<void>;
   completeLesson: (courseSlug: string, lessonIndex: number) => Promise<{ progress: CourseProgress; certificate: EarnedCertificate | null }>;
 };
 
@@ -113,6 +116,14 @@ export function LearnerProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const updateProfileImage = useCallback(async (profileImage: string | null) => {
+    const result = await request<{ user: LearnerUser }>("/learner/profile", {
+      method: "PATCH",
+      body: JSON.stringify({ profileImage }),
+    });
+    setUser(result.user);
+  }, []);
+
   const completeLesson = useCallback(async (courseSlug: string, lessonIndex: number) => {
     const result = await request<{ progress: Omit<CourseProgress, "percent">; certificate: EarnedCertificate | null }>(
       `/learner/courses/${encodeURIComponent(courseSlug)}/lessons/${lessonIndex}/complete`,
@@ -126,7 +137,7 @@ export function LearnerProvider({ children }: { children: ReactNode }) {
     return { progress, certificate: result.certificate };
   }, []);
 
-  const value = useMemo<AuthContextValue>(() => ({ user, loading, error, progressByCourse, certificates, refresh, signIn, signUp, signOut, completeLesson }), [user, loading, error, progressByCourse, certificates, refresh, signIn, signUp, signOut, completeLesson]);
+  const value = useMemo<AuthContextValue>(() => ({ user, loading, error, progressByCourse, certificates, refresh, signIn, signUp, signOut, updateProfileImage, completeLesson }), [user, loading, error, progressByCourse, certificates, refresh, signIn, signUp, signOut, updateProfileImage, completeLesson]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
