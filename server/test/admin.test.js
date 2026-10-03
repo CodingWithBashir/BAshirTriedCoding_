@@ -151,6 +151,39 @@ test("owner can create, edit, list, and delete validated content", async () => {
   assert.equal(removedArticle.response.status, 200);
 });
 
+
+test("course publishing requires substantive authored lesson curriculum", async () => {
+  const noLessons = await call("/api/admin/content/courses", {
+    method: "POST", cookie: ownerCookie,
+    body: { title: "Incomplete course", slug: "incomplete-course", description: "A course that is not ready for learners.", curriculum: [] },
+  });
+  assert.equal(noLessons.response.status, 400);
+
+  const shallowLesson = await call("/api/admin/content/courses", {
+    method: "POST", cookie: ownerCookie,
+    body: { title: "Shallow course", slug: "shallow-course", description: "A course that still needs authored lessons.", curriculum: [{ title: "A title", content: "Too short." }] },
+  });
+  assert.equal(shallowLesson.response.status, 400);
+  assert.match(shallowLesson.payload.error, /real lesson content/i);
+
+  const published = await call("/api/admin/content/courses", {
+    method: "POST", cookie: ownerCookie,
+    body: {
+      title: "Authored test course", slug: "authored-test-course", category: "Foundations", level: "Beginner",
+      duration: "25 minutes", description: "A test course with a genuinely authored lesson body.", icon: "BookOpen", color: "violet",
+      curriculum: [{ title: "Build a first example", content: "Create a small example, run it in a browser, and explain what each line contributes to the result." }],
+    },
+  });
+  assert.equal(published.response.status, 201);
+  assert.equal(published.payload.item.lessons, 1);
+  assert.equal(published.payload.item.curriculum[0].title, "Build a first example");
+  const publicCourse = await call("/api/courses/authored-test-course");
+  assert.equal(publicCourse.response.status, 200);
+  assert.equal(publicCourse.payload.item.lessons, 1);
+  const removed = await call(`/api/admin/content/courses/${published.payload.item.id}`, { method: "DELETE", cookie: ownerCookie });
+  assert.equal(removed.response.status, 200);
+});
+
 test("owner can add role-scoped users without exposing password hashes", async () => {
   const roles = ["viewer", "support", "editor", "admin"];
   const cookies = [];

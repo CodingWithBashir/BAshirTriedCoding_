@@ -13,6 +13,19 @@ const nextConfig: NextConfig = {
   turbopack: { root: process.cwd() },
   allowedDevOrigins: ["*.e2b.app", "*.e2b.dev", "localhost", "127.0.0.1"],
   devIndicators: false,
+  async redirects() {
+    return [
+      { source: "/about", destination: "/courses", permanent: true },
+      { source: "/services", destination: "/courses", permanent: true },
+      { source: "/projects", destination: "/courses", permanent: true },
+      { source: "/projects/:path*", destination: "/courses", permanent: true },
+      { source: "/blog", destination: "/courses", permanent: true },
+      { source: "/blog/:path*", destination: "/courses", permanent: true },
+      { source: "/contact", destination: "/courses", permanent: true },
+      { source: "/resources", destination: "/courses", permanent: true },
+      { source: "/assistant", destination: "/courses", permanent: true },
+    ];
+  },
   async rewrites() {
     return [
       {

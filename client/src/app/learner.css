@@ -54,3 +54,118 @@
   .lesson-earned p { min-width: calc(100% - 45px); }
   .lesson-earned > a { margin-left: 41px; }
 }
+
+/* Reference-inspired parchment certificate with a navy-and-gold geometric frame. */
+.certificate-art {
+  container-type: inline-size;
+  aspect-ratio: 1.53;
+  padding: 2.1%;
+  overflow: hidden;
+  border: clamp(4px, 1cqw, 8px) solid #142a43;
+  border-radius: 2px;
+  background:
+    radial-gradient(ellipse at 50% 10%, rgba(255,255,255,.88), transparent 58%),
+    linear-gradient(135deg, #faf5e9 0%, #f0e6d0 100%);
+  color: #1d3045;
+  box-shadow: 0 12px 32px rgba(5, 13, 25, .18);
+  isolation: isolate;
+}
+.certificate-art::before {
+  z-index: 2;
+  inset: 1.1%;
+  border: 1px solid #bc954b;
+  border-radius: 0;
+  pointer-events: none;
+}
+.certificate-art::after {
+  z-index: -1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    repeating-linear-gradient(45deg, transparent 0 15px, rgba(27, 54, 79, .045) 15px 16px),
+    repeating-linear-gradient(-45deg, transparent 0 15px, rgba(171, 126, 47, .045) 15px 16px);
+  opacity: .45;
+  transform: none;
+}
+.certificate-art--green,
+.certificate-art--cyan,
+.certificate-art--violet,
+.certificate-art--amber,
+.certificate-art--rose,
+.certificate-art--indigo,
+.certificate-art--blue { background-color: #f5eddd; background-image: radial-gradient(ellipse at 50% 10%, rgba(255,255,255,.88), transparent 58%), linear-gradient(135deg,#faf5e9,#f0e6d0); border-color: #142a43; color: #1d3045; }
+.certificate-art--green::before,
+.certificate-art--cyan::before,
+.certificate-art--violet::before,
+.certificate-art--amber::before,
+.certificate-art--rose::before,
+.certificate-art--indigo::before,
+.certificate-art--blue::before { border-color: #bc954b; }
+.certificate-art__ornament { position: absolute; z-index: 3; inset: 2.5%; border: 1px solid rgba(21, 48, 73, .6); pointer-events: none; }
+.certificate-art__corner { position: absolute; width: 7%; height: 8%; border: 0; opacity: 1; }
+.certificate-art__corner--tl { top: -1px; left: -1px; border-top: 2px solid #c49a4c; border-left: 2px solid #c49a4c; }
+.certificate-art__corner--tr { top: -1px; right: -1px; border-top: 2px solid #c49a4c; border-right: 2px solid #c49a4c; }
+.certificate-art__corner--bl { bottom: -1px; left: -1px; border-bottom: 2px solid #c49a4c; border-left: 2px solid #c49a4c; }
+.certificate-art__corner--br { right: -1px; bottom: -1px; border-right: 2px solid #c49a4c; border-bottom: 2px solid #c49a4c; }
+.certificate-art__corner i { position: absolute; display: block; background: #b48b40; }
+.certificate-art__corner i:first-child { width: 72%; height: 1px; }
+.certificate-art__corner i:last-child { width: 1px; height: 68%; }
+.certificate-art__corner--tr i:first-child,.certificate-art__corner--br i:first-child { right: 0; }
+.certificate-art__corner--tr i:last-child,.certificate-art__corner--br i:last-child { right: 0; }
+.certificate-art__corner--bl i:first-child,.certificate-art__corner--br i:first-child { bottom: 0; }
+.certificate-art__corner--bl i:last-child,.certificate-art__corner--br i:last-child { bottom: 0; }
+.certificate-art__edge { position: absolute; left: 14%; width: 72%; height: 1px; background: repeating-linear-gradient(90deg,#b58b43 0 3px,transparent 3px 7px); opacity: .72; }
+.certificate-art__edge--top { top: 0; }.certificate-art__edge--bottom { bottom: 0; }
+.certificate-art__inside { position: relative; z-index: 1; width: 100%; height: 100%; justify-content: center; padding: 4% 8%; }
+.certificate-art__brand { display: flex; align-items: center; gap: 1.4cqw; margin-bottom: 1.8cqw; color: #142a43; }
+.certificate-art__brand > span:last-child { display: grid; gap: .2cqw; text-align: left; }
+.certificate-art__mark { width: 4.3cqw; height: 4.3cqw; border: 1px solid #bf984d; border-radius: 50%; background: #f7efdE; color: #142a43; font-size: 1cqw; }
+.certificate-art__brand b { font: 700 clamp(5px, 1.25cqw, 13px)/1.1 Georgia, 'Times New Roman', serif; letter-spacing: .13em; }
+.certificate-art__brand small { font: 600 clamp(4px, .74cqw, 8px)/1.1 Inter, sans-serif; letter-spacing: .22em; opacity: .72; }
+.certificate-art__rule { width: 62%; height: 1px; margin: .8cqw 0 1.4cqw; background: linear-gradient(90deg,transparent,#bd964f,transparent); opacity: .95; }
+.certificate-art__overline { color: #142a43; font: 700 clamp(6px,1.7cqw,17px)/1.1 Georgia,'Times New Roman',serif; letter-spacing: .12em; }
+.certificate-art__text { margin-top: 1.1cqw; color: #596270; font: italic clamp(5px,.95cqw,10px)/1.15 Georgia,'Times New Roman',serif; }
+.certificate-art__name { max-width: 90%; margin-top: 1cqw; overflow: hidden; color: #18324d; font: 600 clamp(10px,3.5cqw,32px)/1.05 Georgia,'Times New Roman',serif; letter-spacing: .01em; text-overflow: ellipsis; white-space: nowrap; }
+.certificate-art__course-row { max-width: 90%; display: flex; align-items: center; gap: 1cqw; margin-top: 1.3cqw; }
+.certificate-art__course-icon { width: 3.1cqw; height: 3.1cqw; border: 1px solid rgba(182,140,62,.6); border-radius: 50%; background: #f7f0df; color: #243c59; }
+.certificate-art__course { max-width: 100%; margin: 0; color: #243c59; font: 600 clamp(6px,1.65cqw,16px)/1.2 Georgia,'Times New Roman',serif; text-align: center; }
+.certificate-art__rule--short { width: 38%; margin: 1.6cqw 0 1cqw; }
+.certificate-art__details { width: 74%; display: flex; align-items: center; justify-content: space-between; gap: 3%; }
+.certificate-art__details > i { min-width: 0; display: grid; gap: .45cqw; color: #263c53; font-style: normal; }
+.certificate-art__details > i:last-child { text-align: right; }
+.certificate-art__details small { color: #66717c; font: 700 clamp(3px,.67cqw,7px)/1.1 Inter,sans-serif; letter-spacing: .12em; }
+.certificate-art__details b { max-width: 30cqw; overflow: hidden; color: #24364b; font: 600 clamp(4px,.95cqw,10px)/1.15 Inter,sans-serif; text-overflow: ellipsis; white-space: nowrap; }
+.certificate-art__seal { position: static; width: 4.8cqw; height: 4.8cqw; flex: 0 0 auto; border: 1px solid #bd954a; border-radius: 50%; background: radial-gradient(circle,#fff9e9,#e4cf9f); color: #173452; box-shadow: 0 0 0 2px rgba(192,152,71,.13), inset 0 0 0 2px #f8f1e2; }
+.certificate-art--compact { padding: 2.1%; }
+.certificate-art--compact .certificate-art__inside { padding: 4% 8%; }
+.certificate-art--compact .certificate-art__brand { gap: 1.4cqw; margin-bottom: 1.8cqw; }
+.certificate-art--compact .certificate-art__brand small { font-size: clamp(3px,.74cqw,8px); }
+.certificate-art--compact .certificate-art__mark { width: 4.3cqw; height: 4.3cqw; font-size: 1cqw; }
+.certificate-art--compact .certificate-art__rule { margin: .8cqw 0 1.4cqw; }
+.certificate-art--compact .certificate-art__overline { font-size: clamp(4px,1.5cqw,15px); }
+.certificate-art--compact .certificate-art__text { margin-top: 1.1cqw; font-size: clamp(4px,.8cqw,8px); }
+.certificate-art--compact .certificate-art__name { margin-top: 1cqw; font-size: clamp(7px,3.2cqw,30px); }
+.certificate-art--compact .certificate-art__course { font-size: clamp(5px,1.5cqw,14px); }
+.certificate-art--compact .certificate-art__rule--short { margin: 1.6cqw 0 1cqw; }
+.certificate-art--compact .certificate-art__details b { font-size: clamp(3px,.85cqw,9px); }
+.certificate-art--compact .certificate-art__seal { width: 4.8cqw; height: 4.8cqw; }
+.learning-catalog-empty { min-height: 180px; display: grid; justify-items: center; align-content: center; gap: 8px; padding: 24px; border: 1px dashed rgba(143,155,196,.25); border-radius: 12px; background: rgba(14,20,37,.48); text-align: center; }
+.learning-catalog-empty>span { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(167,145,255,.23); border-radius: 12px; background: rgba(136,107,237,.1); color: #bca8ff; }
+.learning-catalog-empty h2 { margin: 3px 0 0; color: #e9e6f7; font: 600 17px var(--font-display); }
+.learning-catalog-empty p { max-width: 410px; margin: 0; color: #929bb3; font-size: 9px; line-height: 1.7; }
+.authored-lesson { padding: clamp(18px,4vw,38px); border: 1px solid rgba(142,154,198,.16); border-radius: 13px; background: linear-gradient(145deg,rgba(19,25,47,.95),rgba(11,17,31,.96)); }
+.authored-lesson__top { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #9789c9; font-size: 7px; font-weight: 700; letter-spacing: .85px; }
+.authored-lesson__complete { display: inline-flex; align-items: center; gap: 5px; color: #8cdaad; }
+.authored-lesson h1 { margin: 15px 0 4px; color: #f0eefb; font: 600 clamp(24px,4vw,38px)/1.1 var(--font-display); letter-spacing: -1px; }
+.authored-lesson__course { margin: 0; color: #9ba3b9; font-size: 9px; }
+.authored-lesson__rule { width: 100%; height: 1px; margin: 20px 0; background: linear-gradient(90deg,rgba(173,147,255,.45),rgba(142,155,198,.12),transparent); }
+.authored-lesson__copy { color: #c2c6d5; font-size: 12px; line-height: 1.9; white-space: normal; }
+.authored-lesson__copy p { margin: 0 0 15px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.authored-lesson__note { display: flex; align-items: center; gap: 9px; margin-top: 24px; padding: 11px; border: 1px solid rgba(149,156,201,.12); border-radius: 8px; background: rgba(16,23,42,.7); color: #b2a0ff; }
+.authored-lesson__note span { display: grid; gap: 3px; }.authored-lesson__note b { color: #dbd8ea; font-size: 8px; }.authored-lesson__note small { color: #8e97af; font-size: 7px; }
+.authored-lesson__navigation { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 17px; padding-top: 14px; border-top: 1px solid rgba(142,153,193,.13); }
+.authored-lesson__navigation>button:not(.lesson-complete-button) { display: inline-flex; align-items: center; gap: 6px; padding: 8px 3px; border: 0; background: transparent; color: #aaa3c7; font-size: 8px; cursor: pointer; }.authored-lesson__navigation>button:disabled { opacity: .35; cursor: default; }
+.authored-lesson__navigation .lesson-complete-button { min-height: 36px; }
+@media print { .certificate-art { border: 6px solid #142a43 !important; box-shadow: none !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }.certificate-art::after { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }

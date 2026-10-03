@@ -16,12 +16,18 @@ const ProjectSchema = new Schema({
   featured: { type: Boolean, default: false },
 }, commonOptions);
 
+const CourseLessonSchema = new Schema({
+  title: { type: String, required: true, trim: true, maxlength: 140 },
+  content: { type: String, required: true, trim: true, maxlength: 12000 },
+}, { _id: false });
+
 const CourseSchema = new Schema({
   title: { type: String, required: true, trim: true, maxlength: 120 },
   slug: { type: String, required: true, unique: true, lowercase: true, maxlength: 120 },
   category: { type: String, trim: true, maxlength: 60 },
   level: { type: String, default: "Beginner", maxlength: 40 },
-  lessons: { type: Number, default: 1, min: 1, max: 120 },
+  lessons: { type: Number, default: 0, min: 0, max: 120 },
+  curriculum: { type: [CourseLessonSchema], default: [], validate: { validator: (value) => value.length <= 120, message: "A course can have at most 120 lessons." } },
   duration: { type: String, maxlength: 60 },
   description: { type: String, maxlength: 3000 },
   icon: { type: String, maxlength: 50 },

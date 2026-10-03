@@ -2,13 +2,13 @@ import Link from "next/link";
 import {
   ArrowDownRight, ArrowRight, ArrowUpRight, Atom, BrainCircuit, Braces, BriefcaseBusiness,
   Code2, CodeXml, Compass, Cpu, Database, Gamepad2, Github, Layers3, Leaf, Mail, MonitorPlay,
-  Blocks, MapPin, PanelsTopLeft, Palette, Plug, Sparkles, Terminal, UserRound, Webhook, type LucideIcon,
+  Award, BookOpen, Blocks, GraduationCap, MapPin, PanelsTopLeft, Palette, Plug, Sparkles, Terminal, UserRound, Webhook, type LucideIcon,
 } from "lucide-react";
 
 const iconMap: Record<string, LucideIcon> = {
   ArrowDownRight, ArrowRight, ArrowUpRight, Atom, BrainCircuit, Braces, BriefcaseBusiness,
   Code2, CodeXml, Compass, Cpu, Database, Gamepad2, Github, Layers3, Leaf, Mail, MonitorPlay,
-  Blocks, MapPin, PanelsTopLeft, Palette, Plug, Sparkles, Terminal, UserRound, Webhook,
+  Award, BookOpen, Blocks, GraduationCap, MapPin, PanelsTopLeft, Palette, Plug, Sparkles, Terminal, UserRound, Webhook,
 };
 
 export function Icon({ name, size = 20, ...props }: { name: string; size?: number; className?: string }) {

@@ -1,4 +1,4 @@
-import { ArrowUpRight, Award, Check, Code2, FileText, Play, Sparkles } from "lucide-react";
+import { ArrowUpRight, Award, Code2, FileText, Play, Sparkles } from "lucide-react";
 import { Icon } from "@/components/ui";
 
 export function ProjectPreview({ variant = "classroom", name = "Project preview" }: { variant?: string; name?: string }) {
@@ -33,22 +33,22 @@ export function ArticleArtwork({ variant = "react" }: { variant?: string }) {
   );
 }
 
-export function CertificateArt({ title, recipient, issued, courseIcon = "Award", courseColor = "violet", color = "blue", compact = false }: { title: string; recipient: string; issued: string; courseIcon?: string; courseColor?: string; color?: string; compact?: boolean }) {
+export function CertificateArt({ title, recipient, issued, certificateNumber = "", courseIcon = "Award", courseColor = "violet", color = "blue", compact = false }: { title: string; recipient: string; issued: string; certificateNumber?: string; courseIcon?: string; courseColor?: string; color?: string; compact?: boolean }) {
+  const CourseIcon = courseIcon === "Award" ? Award : null;
   return (
-    <div className={`certificate-art certificate-art--${color}${compact ? " certificate-art--compact" : ""}`} aria-label={`Certificate preview: ${title}`} role="img">
-      <div className="certificate-art__corner certificate-art__corner--tl" /><div className="certificate-art__corner certificate-art__corner--br" />
+    <div className={`certificate-art certificate-art--${color}${compact ? " certificate-art--compact" : ""}`} aria-label={`Certificate of completion for ${recipient}, course ${title}, issued ${issued}, certificate ${certificateNumber}`} role="img">
+      <div className="certificate-art__ornament" aria-hidden="true"><span className="certificate-art__corner certificate-art__corner--tl"><i /><i /></span><span className="certificate-art__corner certificate-art__corner--tr"><i /><i /></span><span className="certificate-art__corner certificate-art__corner--bl"><i /><i /></span><span className="certificate-art__corner certificate-art__corner--br"><i /><i /></span><span className="certificate-art__edge certificate-art__edge--top" /><span className="certificate-art__edge certificate-art__edge--bottom" /></div>
       <div className="certificate-art__inside">
-        <span className="certificate-art__brand"><span className="certificate-art__mark">CWβ</span><small>CODING WITH BASHIR</small></span>
+        <span className="certificate-art__brand"><span className="certificate-art__mark"><Code2 size={compact ? 10 : 13} /></span><span><b>CODING WITH BASHIR</b><small>LEARNING</small></span></span>
         <span className="certificate-art__rule" />
         <small className="certificate-art__overline">CERTIFICATE OF COMPLETION</small>
-        <span className="certificate-art__text">This certifies that</span>
+        <span className="certificate-art__text">This certificate is awarded to</span>
         <b className="certificate-art__name">{recipient}</b>
-        <span className="certificate-art__text">has successfully completed</span>
-        <span className={`certificate-art__course-row certificate-art__course-row--${courseColor}`}><span className={`certificate-art__course-icon certificate-art__course-icon--${courseColor}`}>{courseIcon === "Award" ? <Award size={compact ? 11 : 14} /> : <Icon name={courseIcon} size={compact ? 11 : 14} />}</span><b className="certificate-art__course">{title}</b></span>
+        <span className="certificate-art__text">for completing the course</span>
+        <span className={`certificate-art__course-row certificate-art__course-row--${courseColor}`}><span className={`certificate-art__course-icon certificate-art__course-icon--${courseColor}`}>{CourseIcon ? <CourseIcon size={compact ? 11 : 15} /> : <Icon name={courseIcon} size={compact ? 11 : 15} />}</span><b className="certificate-art__course">{title}</b></span>
         <span className="certificate-art__rule certificate-art__rule--short" />
-        <span className="certificate-art__sign-row"><i>Bashir Hussein<small>INSTRUCTOR</small></i><b><Award size={compact ? 17 : 23} /></b><i>{issued}<small>DATE ISSUED</small></i></span>
+        <span className="certificate-art__details"><i><small>DATE AWARDED</small><b>{issued}</b></i><span className="certificate-art__seal"><Award size={compact ? 13 : 18} /></span><i><small>CERTIFICATE ID</small><b>{certificateNumber || "—"}</b></i></span>
       </div>
-      <span className="certificate-art__seal"><Check size={compact ? 11 : 14} /></span>
     </div>
   );
 }

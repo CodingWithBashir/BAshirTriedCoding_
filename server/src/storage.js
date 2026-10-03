@@ -9,6 +9,10 @@ const directory = dirname(fileURLToPath(import.meta.url));
 const storePath = resolve(process.env.LOCAL_STORE_PATH || resolve(directory, "../data/store.json"));
 const contentCollections = new Set(["projects", "courses", "certificates", "articles", "testimonials"]);
 const legacySampleCertificateCodes = new Set(["CWB-2025-001", "CWB-2025-002", "CWB-2025-003", "CWB-2025-004", "CWB-2025-005", "CWB-2024-006", "CWB-2024-007"]);
+const legacyDemoCourseSlugs = new Set(["html-css", "javascript", "react-nextjs", "node-express", "python", "django-rest", "game-development", "machine-learning"]);
+const legacyPortfolioProjectSlugs = ["agabonabanyefree", "evara-ai", "codeowl", "bwenge-ai", "whatsapp-clone", "velo-editor"];
+const legacyPortfolioArticleSlugs = ["getting-started-with-react", "deploying-full-stack-app-render", "free-tools-for-developers", "building-responsive-web-apps", "learn-python-in-2025", "my-journey-young-developer"];
+const legacyPortfolioTestimonialNames = ["John Doe", "Amina Uwimana", "Emmanuel N.", "Mugisha Eric"];
 let localMutationQueue = Promise.resolve();
 export let mongoConnected = false;
 
@@ -30,6 +34,10 @@ function emptyLocalState() {
 function cleanContentRecord(collection, row) {
   if (!row || typeof row !== "object") return row;
   if (collection === "certificates" && legacySampleCertificateCodes.has(row.code)) return null;
+  if (legacyPortfolioProjectSlugs.includes(row.slug) && collection === "projects") return null;
+  if (legacyPortfolioArticleSlugs.includes(row.slug) && collection === "articles") return null;
+  if (legacyPortfolioTestimonialNames.includes(row.name) && collection === "testimonials") return null;
+  if (collection === "courses" && legacyDemoCourseSlugs.has(row.slug)) return null;
   if (collection !== "courses") return row;
   const { progress: _legacyDemoProgress, ...clean } = row;
   return clean;
@@ -48,8 +56,8 @@ async function readLocalState() {
       admins: Array.isArray(parsed.admins) ? parsed.admins : [],
       audit: Array.isArray(parsed.audit) ? parsed.audit : [],
       learners: Array.isArray(parsed.learners) ? parsed.learners : [],
-      learnerProgress: Array.isArray(parsed.learnerProgress) ? parsed.learnerProgress : [],
-      learnerCertificates: Array.isArray(parsed.learnerCertificates) ? parsed.learnerCertificates : [],
+      learnerProgress: (Array.isArray(parsed.learnerProgress) ? parsed.learnerProgress : []).filter((row) => !legacyDemoCourseSlugs.has(row.courseSlug)),
+      learnerCertificates: (Array.isArray(parsed.learnerCertificates) ? parsed.learnerCertificates : []).filter((row) => !legacyDemoCourseSlugs.has(row.courseSlug)),
     };
   } catch (error) {
     if (error.code !== "ENOENT") console.error("[database] Could not read local store:", error.message);
@@ -114,6 +122,19 @@ export async function connectMongo() {
 }
 
 async function seedMongo() {
+  const learningPlatformMigration = "remove-fake-course-and-portfolio-seeds-v1";
+  if (!await models.settings.exists({ key: learningPlatformMigration })) {
+    const demoSlugs = Array.from(legacyDemoCourseSlugs);
+    await models.courses.deleteMany({ slug: { $in: demoSlugs } });
+    await models.learnerProgress.deleteMany({ courseSlug: { $in: demoSlugs } });
+    await models.learnerCertificates.deleteMany({ courseSlug: { $in: demoSlugs } });
+    await models.projects.deleteMany({ slug: { $in: legacyPortfolioProjectSlugs } });
+    await models.articles.deleteMany({ slug: { $in: legacyPortfolioArticleSlugs } });
+    await models.testimonials.deleteMany({ name: { $in: legacyPortfolioTestimonialNames } });
+    await models.settings.updateOne({ key: learningPlatformMigration }, { $setOnInsert: { value: { version: 1 } } }, { upsert: true });
+    console.info("[database] removed demo courses and portfolio examples; publish authored curricula through Learning Admin");
+  }
+
   const seedKey = "starter-content-v1";
   const alreadySeeded = await models.settings.exists({ key: seedKey });
   if (!alreadySeeded) {
@@ -125,7 +146,7 @@ async function seedMongo() {
       }
     }
     await models.settings.updateOne({ key: seedKey }, { $setOnInsert: { value: { version: 1 } } }, { upsert: true });
-    console.info("[database] portfolio collections are ready");
+    console.info("[database] learning content collections are ready");
   } else {
     console.info("[database] starter content has already been initialized");
   }
@@ -150,20 +171,25 @@ export async function listContent(collection) {
   const Model = models[collection];
   if (mongoConnected) {
     const result = await Model.find().sort({ createdAt: -1 }).lean();
-    return result.map((row) => cleanContentRecord(collection, plainRecord(row))).filter(Boolean);
+    return result.map((row) => cleanContentRecord(collection, plainRecord(row))).filter(Boolean).filter((row) => collection !== "courses" || (Array.isArray(row.curriculum) && row.curriculum.length > 0));
   }
   const state = await readLocalState();
-  return state.content[collection] ?? [];
+  const rows = state.content[collection] ?? [];
+  return collection === "courses" ? rows.filter((row) => Array.isArray(row.curriculum) && row.curriculum.length > 0) : rows;
 }
 
 export async function findBySlug(collection, slug) {
   if (!contentCollections.has(collection)) return null;
   if (mongoConnected) {
     const result = await models[collection].findOne({ slug }).lean();
-    if (result) return cleanContentRecord(collection, plainRecord(result));
+    if (result) {
+      const row = cleanContentRecord(collection, plainRecord(result));
+      return collection !== "courses" || (Array.isArray(row?.curriculum) && row.curriculum.length > 0) ? row : null;
+    }
   }
   const state = await readLocalState();
-  return (state.content[collection] ?? []).find((row) => row.slug === slug) ?? null;
+  const row = (state.content[collection] ?? []).find((entry) => entry.slug === slug) ?? null;
+  return collection !== "courses" || (Array.isArray(row?.curriculum) && row.curriculum.length > 0) ? row : null;
 }
 
 export async function createContent(collection, item) {
@@ -439,7 +465,8 @@ function newCertificateNumber() {
 }
 
 export async function completeLearnerLesson(learner, course, lessonIndex) {
-  const lessonCount = Math.min(120, Math.max(1, Number(course.lessons) || 1));
+  const lessonCount = Array.isArray(course.curriculum) ? Math.min(120, course.curriculum.length) : 0;
+  if (!lessonCount) throw httpError("This course has no authored lessons available yet.", 404);
   if (!Number.isInteger(lessonIndex) || lessonIndex < 0 || lessonIndex >= lessonCount) throw httpError("Choose a valid lesson in this course.", 400);
   if (mongoConnected) {
     const filter = { learnerId: learner.id, courseSlug: course.slug };

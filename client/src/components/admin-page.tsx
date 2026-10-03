@@ -33,54 +33,32 @@ type FieldSpec = { key: string; label: string; kind?: "textarea" | "number" | "c
 type EditorState = { collection: Collection; key: string | null; values: Record<string, string | boolean> };
 
 const collections: Array<{ id: Collection; label: string; icon: typeof BriefcaseBusiness }> = [
-  { id: "projects", label: "Projects", icon: BriefcaseBusiness },
   { id: "courses", label: "Courses", icon: BookOpen },
-  { id: "certificates", label: "Certificates", icon: Award },
-  { id: "articles", label: "Articles", icon: FileText },
-  { id: "testimonials", label: "Testimonials", icon: MessageSquareText },
 ];
 
 const roleInfo: Record<Role, { label: string; description: string }> = {
-  owner: { label: "Owner", description: "Full access, including team roles and deployment settings." },
-  admin: { label: "Administrator", description: "Manage portfolio content and the contact inbox." },
-  editor: { label: "Editor", description: "Create, update, and remove published portfolio content." },
+  owner: { label: "Owner", description: "Full access to learning-course management, team roles, and account settings." },
+  admin: { label: "Administrator", description: "Manage authored learning courses and the contact inbox." },
+  editor: { label: "Editor", description: "Create, update, and remove published learning courses." },
   support: { label: "Support", description: "Read and triage contact messages without editing content." },
   viewer: { label: "Viewer", description: "Read dashboard and content data without making changes." },
 };
 
 const fields: Record<Collection, FieldSpec[]> = {
-  projects: [
-    { key: "name", label: "Project name" }, { key: "slug", label: "URL slug", hint: "lowercase-words-with-hyphens" },
-    { key: "category", label: "Category" }, { key: "label", label: "Short label" },
-    { key: "description", label: "Description", kind: "textarea" }, { key: "stack", label: "Technology stack", hint: "Comma-separated values" },
-    { key: "color", label: "Accent color" }, { key: "variant", label: "Preview style" }, { key: "featured", label: "Feature this project", kind: "checkbox" },
-  ],
+  projects: [],
   courses: [
-    { key: "title", label: "Course title" }, { key: "slug", label: "URL slug" }, { key: "category", label: "Category" },
-    { key: "level", label: "Level" }, { key: "lessons", label: "Number of lessons", kind: "number" },
-    { key: "duration", label: "Duration" }, { key: "icon", label: "Icon name" }, { key: "color", label: "Accent color" },
-    { key: "description", label: "Description", kind: "textarea" },
+    { key: "title", label: "Course title" }, { key: "slug", label: "URL slug", hint: "lowercase-words-with-hyphens" },
+    { key: "category", label: "Category" }, { key: "level", label: "Level" },
+    { key: "duration", label: "Estimated duration" }, { key: "icon", label: "Vector icon name", hint: "A vector icon: Code2, Braces, Atom, BrainCircuit, BookOpen, or GraduationCap." },
+    { key: "color", label: "Accent color" }, { key: "description", label: "Course description", kind: "textarea" },
+    { key: "curriculum", label: "Authored lesson curriculum", kind: "textarea", hint: "Each lesson block: first line is its title; add substantive lesson content below. Separate lessons with --- on a line by itself. 1–120 lessons; at least 20 characters of content each." },
   ],
-  certificates: [
-    { key: "title", label: "Certificate title" }, { key: "slug", label: "URL slug" }, { key: "category", label: "Category" },
-    { key: "issued", label: "Date issued" }, { key: "level", label: "Level" }, { key: "code", label: "Certificate code" },
-    { key: "color", label: "Accent color" }, { key: "description", label: "Description", kind: "textarea" },
-  ],
-  articles: [
-    { key: "title", label: "Article title" }, { key: "slug", label: "URL slug" }, { key: "category", label: "Category" },
-    { key: "date", label: "Display date" }, { key: "readTime", label: "Reading time" }, { key: "variant", label: "Artwork style" },
-    { key: "excerpt", label: "Short excerpt", kind: "textarea" }, { key: "body", label: "Article body", kind: "textarea", hint: "Separate paragraphs with a blank line; up to 12,000 characters." },
-  ],
-  testimonials: [
-    { key: "name", label: "Person’s name" }, { key: "role", label: "Role or relationship" },
-    { key: "initials", label: "Avatar initials" }, { key: "color", label: "Accent color" },
-    { key: "quote", label: "Quote", kind: "textarea" },
-  ],
+  certificates: [], articles: [], testimonials: [],
 };
 
 const navigation: Array<{ id: AdminTab; label: string; icon: typeof Activity }> = [
   { id: "overview", label: "Overview", icon: Activity },
-  { id: "content", label: "Content studio", icon: Layers3 },
+  { id: "content", label: "Course management", icon: Layers3 },
   { id: "messages", label: "Inbox", icon: Mail },
   { id: "team", label: "Team & roles", icon: Users },
   { id: "activity", label: "Audit trail", icon: ShieldCheck },
@@ -119,10 +97,18 @@ function timeAgo(value?: string | null, fallback = "No activity recorded") {
 function toEditorValues(collection: Collection, item?: ContentItem): Record<string, string | boolean> {
   return Object.fromEntries(fields[collection].map((field) => {
     const value = item?.[field.key];
+    if (field.key === "curriculum" && Array.isArray(value)) return [field.key, value.map((lesson) => `${String((lesson as Record<string, unknown>).title || "")}\n${String((lesson as Record<string, unknown>).content || "")}`).join("\n\n---\n\n")];
     if (field.kind === "checkbox") return [field.key, Boolean(value)];
     if (Array.isArray(value)) return [field.key, value.join(", ")];
     return [field.key, value === undefined || value === null ? "" : String(value)];
   }));
+}
+
+function parseCurriculumText(value: string) {
+  return value.split(/\n\s*---\s*\n/).map((block) => block.trim()).filter(Boolean).map((block) => {
+    const [title = "", ...contentLines] = block.split(/\r?\n/);
+    return { title: title.trim(), content: contentLines.join("\n").trim() };
+  });
 }
 
 function slugify(value: string) {
@@ -139,7 +125,7 @@ export function AdminPage() {
   const [panelError, setPanelError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [overview, setOverview] = useState<Overview | null>(null);
-  const [contentCollection, setContentCollection] = useState<Collection>("projects");
+  const [contentCollection, setContentCollection] = useState<Collection>("courses");
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [search, setSearch] = useState("");
   const [editor, setEditor] = useState<EditorState | null>(null);
@@ -254,6 +240,7 @@ export function AdminPage() {
       if (field.kind === "checkbox") payload[field.key] = Boolean(value);
       else if (field.kind === "number") payload[field.key] = Number(value || 0);
       else if (field.key === "stack") payload[field.key] = String(value || "").split(",").map((part) => part.trim()).filter(Boolean);
+      else if (field.key === "curriculum") payload[field.key] = parseCurriculumText(String(value ?? ""));
       else payload[field.key] = String(value ?? "").trim();
     }
     setPanelError("");
@@ -270,7 +257,7 @@ export function AdminPage() {
 
   async function removeContent(item: ContentItem) {
     const title = itemTitle(item);
-    if (!window.confirm(`Delete “${title}” from ${contentCollection}? This cannot be undone.`)) return;
+    if (!window.confirm(`Delete “${title}” from the course catalog? This cannot be undone.`)) return;
     try {
       await adminRequest(`/content/${contentCollection}/${encodeURIComponent(String(item.id || item.slug))}`, { method: "DELETE" });
       setRefreshKey((value) => value + 1);
@@ -308,24 +295,24 @@ export function AdminPage() {
         <section className={styles.loginStory}>
           <Link href="/" className={styles.loginBrand}><LogoMark /><span>Coding With <b>Bashir</b></span></Link>
           <div className={styles.loginStoryCopy}>
-            <span className={styles.kicker}><Sparkles size={14} /> THE CREATOR STUDIO</span>
+            <span className={styles.kicker}><Sparkles size={14} /> THE LEARNING ADMIN</span>
             <h1>Everything you’re building,<br /><em>in one clear view.</em></h1>
-            <p>Manage the public portfolio, keep the inbox thoughtful, and bring the right people into the work.</p>
-            <div className={styles.loginFeatures}><span><CheckCircle2 size={15} /> Content studio for five collections</span><span><ShieldCheck size={15} /> Clear roles and least-privilege access</span><span><Activity size={15} /> Activity log for important changes</span></div>
+            <p>Manage real courses and publish only after their lesson curriculum is authored.</p>
+            <div className={styles.loginFeatures}><span><CheckCircle2 size={15} /> Course authoring with required lessons</span><span><ShieldCheck size={15} /> Clear roles and least-privilege access</span><span><Activity size={15} /> Activity log for important changes</span></div>
           </div>
-          <div className={styles.loginStoryFoot}><span><span /> PRIVATE WORKSPACE</span><Link href="/">Return to the public site <ArrowUpRight size={13} /></Link></div>
+          <div className={styles.loginStoryFoot}><span><span /> PRIVATE WORKSPACE</span><Link href="/">Return to the learning platform <ArrowUpRight size={13} /></Link></div>
         </section>
         <section className={styles.loginCard}>
           <span className={styles.loginCardIcon}><LockKeyhole size={19} /></span>
           <span className={styles.kicker}>SECURE SIGN-IN</span>
-          <h2>Welcome to the studio.</h2>
-          <p>Use an admin account provided by the portfolio owner. There is no public sign-up.</p>
+          <h2>Welcome to Learning Admin.</h2>
+          <p>Use an admin account provided by the learning-platform owner. There is no public sign-up.</p>
           {setupRequired && <div className={styles.setupNotice}><Shield size={16} /><span><b>Admin setup is required</b><small>Configure <code>JWT_SECRET</code>, <code>ADMIN_EMAIL</code>, and <code>ADMIN_PASSWORD</code> on the server. See the deployment guide in README.</small></span></div>}
           {message && <div className={styles.formError} role="alert">{message}</div>}
           {!setupRequired && <form onSubmit={handleLogin} className={styles.loginForm}>
             <label>Email address<input type="email" autoComplete="username" required value={loginEmail} onChange={(event) => setLoginEmail(event.target.value)} placeholder="you@yourdomain.com" /></label>
             <label>Password<input type="password" autoComplete="current-password" minLength={12} required value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} placeholder="Your secure password" /></label>
-            <button className={styles.primaryButton} disabled={loginBusy}>{loginBusy ? <><span className={styles.spinnerSmall} /> Checking credentials…</> : <>Open admin workspace <ArrowRight size={15} /></>}</button>
+            <button className={styles.primaryButton} disabled={loginBusy}>{loginBusy ? <><span className={styles.spinnerSmall} /> Checking credentials…</> : <>Open Learning Admin workspace <ArrowRight size={15} /></>}</button>
           </form>}
           <div className={styles.loginCardFoot}><span><LockKeyhole size={12} /> HttpOnly session · 8 hour expiry</span><a href="mailto:hello@codingwithbashir.dev">Need access? <ArrowUpRight size={12} /></a></div>
         </section>
@@ -336,20 +323,20 @@ export function AdminPage() {
   return <main className={styles.adminPage}>
     <div className={styles.adminShell}>
       <aside className={styles.sidebar}>
-        <Link href="/" className={styles.sidebarBrand}><LogoMark small /><span><b>Creator studio</b><small>CODING WITH BASHIR</small></span></Link>
+        <Link href="/" className={styles.sidebarBrand}><LogoMark small /><span><b>Learning Admin</b><small>CODING WITH BASHIR</small></span></Link>
         <div className={styles.workspaceLabel}>WORKSPACE</div>
         <nav aria-label="Admin workspace">
           {visibleNavigation.map(({ id, label, icon: Icon }) => <button key={id} onClick={() => { setTab(id); setPanelError(""); }} className={`${styles.navItem} ${tab === id ? styles.navItemActive : ""}`} aria-current={tab === id ? "page" : undefined}><Icon size={16} /><span>{label}</span>{id === "messages" && overview?.counts.unreadMessages ? <i>{overview.counts.unreadMessages}</i> : null}</button>)}
         </nav>
         <div className={styles.sidebarBottom}>
-          <div className={styles.sideHelp}><CircleHelp size={15} /><span><b>Need a hand?</b><small>Contact portfolio support</small></span><Link href="/contact" aria-label="Contact support"><ArrowUpRight size={14} /></Link></div>
+          <div className={styles.sideHelp}><CircleHelp size={15} /><span><b>Need a hand?</b><small>Browse learner courses</small></span><Link href="/courses" aria-label="Browse courses"><ArrowUpRight size={14} /></Link></div>
           <div className={styles.sideUser}><span className={styles.avatar}>{initials(user.name)}</span><span className={styles.sideUserName}><b>{user.name}</b><small>{roleInfo[user.role].label}</small></span><button onClick={handleLogout} title="Sign out" aria-label="Sign out"><LogOut size={15} /></button></div>
         </div>
       </aside>
       <section className={styles.mainPanel}>
-        <header className={styles.topbar}><div><span className={styles.breadcrumb}>Studio</span><span className={styles.breadcrumbSlash}>/</span><b>{navigation.find((item) => item.id === tab)?.label}</b></div><div className={styles.topActions}><span className={styles.online}><i /> API connected</span><button className={styles.refreshButton} aria-label="Refresh current view" title="Refresh data" onClick={() => setRefreshKey((value) => value + 1)}><RefreshCw size={15} /></button><Link href="/" className={styles.viewSite}><ArrowUpRight size={14} /> View site</Link></div></header>
+        <header className={styles.topbar}><div><span className={styles.breadcrumb}>Learning Admin</span><span className={styles.breadcrumbSlash}>/</span><b>{navigation.find((item) => item.id === tab)?.label}</b></div><div className={styles.topActions}><span className={styles.online}><i /> API connected</span><button className={styles.refreshButton} aria-label="Refresh current view" title="Refresh data" onClick={() => setRefreshKey((value) => value + 1)}><RefreshCw size={15} /></button><Link href="/" className={styles.viewSite}><ArrowUpRight size={14} /> View site</Link></div></header>
         <div className={styles.mainContent}>
-          <div className={styles.pageHeading}><div><span className={styles.kicker}><span className={styles.headingLive} /> PRIVATE WORKSPACE · {roleInfo[user.role].label.toUpperCase()}</span><h1>{tab === "overview" ? `Good to see you, ${user.name.split(" ")[0]}.` : navigation.find((item) => item.id === tab)?.label}</h1><p>{tab === "overview" ? "A focused look at your content, community, and what needs your attention next." : roleInfo[user.role].description}</p></div><div className={styles.headingDate}><span>YOUR STUDIO</span><b>{new Intl.DateTimeFormat("en", { dateStyle: "full" }).format(new Date())}</b></div></div>
+          <div className={styles.pageHeading}><div><span className={styles.kicker}><span className={styles.headingLive} /> PRIVATE LEARNING ADMIN · {roleInfo[user.role].label.toUpperCase()}</span><h1>{tab === "overview" ? `Good to see you, ${user.name.split(" ")[0]}.` : navigation.find((item) => item.id === tab)?.label}</h1><p>{tab === "overview" ? "A focused view of published learning courses and workspace activity." : roleInfo[user.role].description}</p></div><div className={styles.headingDate}><span>LEARNING ADMIN</span><b>{new Intl.DateTimeFormat("en", { dateStyle: "full" }).format(new Date())}</b></div></div>
           {panelError && <div className={styles.panelError} role="alert"><span>{panelError}</span><button onClick={() => setPanelError("")} aria-label="Dismiss"><X size={14} /></button></div>}
           {panelLoading && <div className={styles.loadingBar}><span /></div>}
           {tab === "overview" && <OverviewPanel overview={overview} loading={panelLoading} role={user.role} onOpenMessages={() => setTab("messages")} onOpenContent={(collection) => { if (collection) setContentCollection(collection); setTab("content"); }} />}
@@ -369,9 +356,7 @@ function OverviewPanel({ overview, loading, role, onOpenMessages, onOpenContent 
   const canReadMessages = overview?.inboxAvailable ?? ["owner", "admin", "support"].includes(role);
   const canReadActivity = overview?.activityAvailable ?? ["owner", "admin", "support"].includes(role);
   const metrics = [
-    { label: "Projects", key: "projects", icon: BriefcaseBusiness, tint: "violet" },
-    { label: "Courses", key: "courses", icon: BookOpen, tint: "cyan" },
-    { label: "Published notes", key: "articles", icon: FileText, tint: "pink" },
+    { label: "Published courses", key: "courses", icon: BookOpen, tint: "cyan" },
     { label: "New messages", key: "unreadMessages", icon: Mail, tint: "green" },
   ].filter(({ key }) => key !== "unreadMessages" || canReadMessages);
   const values = overview?.dailyActivity.map((day) => day.count) || [];
@@ -381,7 +366,7 @@ function OverviewPanel({ overview, loading, role, onOpenMessages, onOpenContent 
     <div className={styles.metricsGrid}>{metrics.map(({ label, key, icon: Icon, tint }) => <article className={styles.metricCard} key={key}><span className={`${styles.metricIcon} ${styles[`metric${tint[0].toUpperCase()}${tint.slice(1)}`]}`}><Icon size={17} /></span><span className={styles.metricLabel}>{label}</span><b>{overview?.counts[key] ?? (loading ? "—" : 0)}</b><small><span className={styles.metricPulse} /> Updated just now</small><span className={styles.metricSpark} /></article>)}</div>
     <div className={styles.overviewGrid}>
       {canReadActivity && <section className={styles.panelCard}>
-        <div className={styles.cardHeading}><span><h2>Studio activity</h2><p>{canReadMessages && ["owner", "admin"].includes(role) ? "Messages and admin actions over the last seven days." : canReadMessages ? "Inbox activity over the last seven days." : "Admin actions over the last seven days."}</p></span><span className={styles.cardHeadingBadge}><Activity size={12} /> 7 DAYS</span></div>
+        <div className={styles.cardHeading}><span><h2>Admin activity</h2><p>{canReadMessages && ["owner", "admin"].includes(role) ? "Messages and admin actions over the last seven days." : canReadMessages ? "Inbox activity over the last seven days." : "Admin actions over the last seven days."}</p></span><span className={styles.cardHeadingBadge}><Activity size={12} /> 7 DAYS</span></div>
         <div className={styles.chartWrap} role="img" aria-label={`Seven day activity chart, ${values.reduce((sum, value) => sum + value, 0)} total events`}>
           <svg viewBox="0 0 100 88" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="studio-chart-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#9c77ff" stopOpacity=".4" /><stop offset="1" stopColor="#9c77ff" stopOpacity="0" /></linearGradient></defs><path d={`M ${points || "5,78 95,78"} L 95,82 L 5,82 Z`} fill="url(#studio-chart-fill)" /><polyline points={points || "5,78 95,78"} fill="none" stroke="#b196ff" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />{values.map((value, index) => <circle key={index} cx={values.length <= 1 ? 50 : 5 + index * (90 / (values.length - 1))} cy={78 - value / maxValue * 60} r="1.6" fill="#f1eaff" stroke="#9c77ff" strokeWidth="1" />)}</svg>
           <div className={styles.chartLabels}>{overview?.dailyActivity.map((day) => <span key={day.date}>{day.label}</span>)}</div>
@@ -393,7 +378,7 @@ function OverviewPanel({ overview, loading, role, onOpenMessages, onOpenContent 
       </section>}
     </div>
     <section className={styles.panelCard}>
-      <div className={styles.cardHeading}><span><h2>Your content library</h2><p>Five collections, one tidy studio.</p></span><button className={styles.textAction} onClick={() => onOpenContent()}>Manage content <ArrowRight size={13} /></button></div>
+      <div className={styles.cardHeading}><span><h2>Your course catalog</h2><p>One focused course catalog.</p></span><button className={styles.textAction} onClick={() => onOpenContent()}>Manage courses <ArrowRight size={13} /></button></div>
       <div className={styles.collectionStats}>{collections.map(({ id, label, icon: Icon }, index) => <button key={id} onClick={() => onOpenContent(id)} className={styles.collectionStat}><span className={`${styles.collectionIcon} ${styles[`collectionTone${index}`]}`}><Icon size={15} /></span><span><b>{overview?.counts[id] ?? 0}</b><small>{label}</small></span><ArrowUpRight size={13} /></button>)}</div>
     </section>
     <div className={styles.overviewBottom}><div><span><ShieldCheck size={16} /></span><div><b>Access is role-aware</b><small>Your account is signed in as <strong>{roleInfo[role].label}</strong>. Sensitive actions require explicit API permissions.</small></div></div><div><span><KeyRound size={16} /></span><div><b>Protected session</b><small>HttpOnly cookie · secure transport in production · 8-hour expiry</small></div></div></div>
@@ -405,11 +390,11 @@ function ContentPanel({ collection, setCollection, items, total, query, setQuery
   onCreate: () => void; onEdit: (item: ContentItem) => void; onDelete: (item: ContentItem) => void;
 }) {
   return <div className={styles.contentPanel}>
-    <div className={styles.contentToolbar}><div className={styles.collectionTabs} role="tablist" aria-label="Content collection">{collections.map(({ id, label }) => <button key={id} role="tab" aria-selected={collection === id} className={collection === id ? styles.collectionTabActive : ""} onClick={() => setCollection(id)}>{label}</button>)}</div><button className={styles.primaryButtonCompact} disabled={!canEdit} onClick={onCreate}><Plus size={14} /> New {collection.slice(0, -1)}</button></div>
+    <div className={styles.contentToolbar}><div className={styles.collectionTabs} role="tablist" aria-label="Course catalog">{collections.map(({ id, label }) => <button key={id} role="tab" aria-selected={collection === id} className={collection === id ? styles.collectionTabActive : ""} onClick={() => setCollection(id)}>{label}</button>)}</div><button className={styles.primaryButtonCompact} disabled={!canEdit} onClick={onCreate}><Plus size={14} /> New {collection.slice(0, -1)}</button></div>
     <section className={styles.panelCard}>
-      <div className={styles.listHeader}><span><h2>{collections.find((item) => item.id === collection)?.label} library</h2><p>{total} entries · changes appear on the public site through the API.</p></span><label className={styles.searchBox}><Search size={14} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search this collection…" /><kbd>/</kbd></label></div>
-      <div className={styles.tableScroller}><table className={styles.contentTable}><thead><tr><th>Entry</th><th>Category</th><th>URL slug</th><th>Updated</th>{canEdit && <th>Actions</th>}</tr></thead><tbody>{items.map((item) => <tr key={String(item.id || item.slug)}><td><span className={styles.entryTitle}><i>{initials(itemTitle(item))}</i><span><b>{itemTitle(item)}</b><small>{String(item.description || item.excerpt || item.quote || "No summary added yet.").slice(0, 86)}</small></span></span></td><td><span className={styles.categoryPill}>{String(item.category || item.role || "General")}</span></td><td><code>/{String(item.slug || "—")}</code></td><td>{timeAgo(String(item.updatedAt || item.createdAt || ""))}</td>{canEdit && <td><span className={styles.rowActions}><button title="Edit entry" onClick={() => onEdit(item)}><Settings2 size={14} /></button><button title="Delete entry" className={styles.deleteIcon} onClick={() => onDelete(item)}><Archive size={14} /></button></span></td>}</tr>)}</tbody></table></div>
-      {!items.length && <div className={styles.emptyState}><span><Search size={19} /></span><b>{query ? "No matching content" : "This collection is empty"}</b><small>{query ? "Try another search term." : "Create an entry to give this part of the site a fresh start."}</small>{canEdit && !query && <button className={styles.textAction} onClick={onCreate}>Create the first entry <ArrowRight size={13} /></button>}</div>}
+      <div className={styles.listHeader}><span><h2>{collections.find((item) => item.id === collection)?.label} library</h2><p>{total} entries · published courses appear in the learner catalog.</p></span><label className={styles.searchBox}><Search size={14} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search courses…" /><kbd>/</kbd></label></div>
+      <div className={styles.tableScroller}><table className={styles.contentTable}><thead><tr><th>Entry</th><th>Category</th><th>URL slug</th><th>Updated</th>{canEdit && <th>Actions</th>}</tr></thead><tbody>{items.map((item) => <tr key={String(item.id || item.slug)}><td><span className={styles.entryTitle}><i>{initials(itemTitle(item))}</i><span><b>{itemTitle(item)}</b><small>{String(item.description || item.excerpt || item.quote || "No description provided.").slice(0, 86)}</small></span></span></td><td><span className={styles.categoryPill}>{String(item.category || item.role || "General")}</span></td><td><code>/{String(item.slug || "—")}</code></td><td>{timeAgo(String(item.updatedAt || item.createdAt || ""))}</td>{canEdit && <td><span className={styles.rowActions}><button title="Edit entry" onClick={() => onEdit(item)}><Settings2 size={14} /></button><button title="Delete entry" className={styles.deleteIcon} onClick={() => onDelete(item)}><Archive size={14} /></button></span></td>}</tr>)}</tbody></table></div>
+      {!items.length && <div className={styles.emptyState}><span><Search size={19} /></span><b>{query ? "No matching content" : "No courses published yet"}</b><small>{query ? "Try another search term." : "Publish a course only after adding its complete authored curriculum."}</small>{canEdit && !query && <button className={styles.textAction} onClick={onCreate}>Create the first entry <ArrowRight size={13} /></button>}</div>}
     </section>
   </div>;
 }
@@ -456,7 +441,7 @@ function ContentEditor({ editor, setEditor, onSubmit }: { editor: EditorState; s
   }
   return <div className={styles.modalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditor(null); }}>
     <section className={styles.editorModal} role="dialog" aria-modal="true" aria-labelledby="editor-title"><header className={styles.modalHeader}><span className={styles.modalIcon}><Layers3 size={16} /></span><span><small>{editor.key ? "EDIT EXISTING ENTRY" : "ADD SOMETHING NEW"}</small><h2 id="editor-title">{editor.key ? "Update" : "Create"} {primaryLabel.slice(0, -1)}</h2></span><button onClick={() => setEditor(null)} aria-label="Close editor"><X size={17} /></button></header>
-      <form onSubmit={onSubmit}><div className={styles.editorFields}>{fields[editor.collection].map((field) => <label className={`${styles.editorField} ${field.kind === "textarea" ? styles.editorFieldWide : ""}`} key={field.key}><span>{field.label}</span>{field.kind === "textarea" ? <textarea required={!editor.key && ["description", "excerpt", "quote", "body"].includes(field.key)} rows={field.key === "body" ? 8 : 4} maxLength={field.key === "body" ? 12000 : field.key === "quote" ? 1200 : field.key === "excerpt" ? 500 : 3000} value={String(editor.values[field.key] ?? "")} onChange={(event) => updateField(field.key, event.target.value)} /> : field.kind === "checkbox" ? <span className={styles.checkboxField}><input type="checkbox" checked={Boolean(editor.values[field.key])} onChange={(event) => updateField(field.key, event.target.checked)} /><i>Show this project in featured work</i></span> : <input type={field.kind === "number" ? "number" : "text"} min={field.key === "lessons" ? "1" : field.kind === "number" ? "0" : undefined} max={field.key === "lessons" ? "120" : undefined} required={!editor.key && ["name", "title", "slug", "category", "code", "lessons"].includes(field.key)} value={String(editor.values[field.key] ?? "")} onChange={(event) => updateField(field.key, event.target.value)} />}{field.hint && <small>{field.hint}</small>}</label>)}</div><footer className={styles.modalFooter}><span><ShieldCheck size={12} /> Saved to the portfolio database</span><button className={styles.primaryButtonCompact} type="submit"><Check size={14} /> Save entry</button></footer></form>
+      <form onSubmit={onSubmit}><div className={styles.editorFields}>{fields[editor.collection].map((field) => <label className={`${styles.editorField} ${field.kind === "textarea" ? styles.editorFieldWide : ""}`} key={field.key}><span>{field.label}</span>{field.kind === "textarea" ? <textarea required={!editor.key && ["description", "excerpt", "quote", "body", "curriculum"].includes(field.key)} rows={field.key === "curriculum" ? 16 : field.key === "body" ? 8 : 4} maxLength={field.key === "curriculum" ? 1500000 : field.key === "body" ? 12000 : field.key === "quote" ? 1200 : field.key === "excerpt" ? 500 : 3000} value={String(editor.values[field.key] ?? "")} onChange={(event) => updateField(field.key, event.target.value)} /> : field.kind === "checkbox" ? <span className={styles.checkboxField}><input type="checkbox" checked={Boolean(editor.values[field.key])} onChange={(event) => updateField(field.key, event.target.checked)} /><i>Show this project in featured work</i></span> : <input type={field.kind === "number" ? "number" : "text"} min={field.key === "lessons" ? "1" : field.kind === "number" ? "0" : undefined} max={field.key === "lessons" ? "120" : undefined} required={!editor.key && ["name", "title", "slug", "category", "code", "lessons"].includes(field.key)} value={String(editor.values[field.key] ?? "")} onChange={(event) => updateField(field.key, event.target.value)} />}{field.hint && <small>{field.hint}</small>}</label>)}</div><footer className={styles.modalFooter}><span><ShieldCheck size={12} /> Saved to the learning catalog</span><button className={styles.primaryButtonCompact} type="submit"><Check size={14} /> Save entry</button></footer></form>
     </section>
   </div>;
 }

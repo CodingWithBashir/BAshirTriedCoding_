@@ -43,7 +43,7 @@ export async function bootstrapConfiguredOwner() {
 
   const existing = await findAdminByEmail(email);
   const credentials = {
-    name: process.env.ADMIN_NAME?.trim().slice(0, 80) || "Portfolio owner",
+    name: process.env.ADMIN_NAME?.trim().slice(0, 80) || "Learning admin",
     email,
     passwordHash: hashAdminPassword(password),
     role: "owner",

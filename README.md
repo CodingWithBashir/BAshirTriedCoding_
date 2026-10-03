@@ -1,6 +1,6 @@
 # Coding With Bashir
 
-A dark navy-and-violet portfolio and learning studio for **Bashir Hussein**. The public experience pairs a long-form developer portfolio with interactive course, project, certificate, journal, resource, and contact views. A private, role-aware creator studio manages the portfolio collections and contact inbox.
+A learner-first coding platform for **Coding With Bashir**. Learners sign up or sign in, study published courses with authored lesson curricula, save progress to their own account, and receive a personalized certificate on genuine course completion. The public catalog contains no seeded/demo courses; a private Learning Admin workspace manages course publishing.
 
 > **Deployment model:** the Next.js frontend is designed for **Vercel**; the Express API is designed for **Render**; **MongoDB Atlas** is the durable database. `render.yaml` describes the API service. The app can also run locally with a JSON preview store, but that store is not appropriate for production persistence.
 
@@ -56,9 +56,9 @@ The browser uses relative API paths, so it does not need to know a private backe
 ```text
 client/
   src/app/                 Next.js routes and metadata
-  src/components/          Portfolio, learning, admin, and shared UI
-  src/lib/data.ts          Curated client-side fallback content
-  src/lib/use-portfolio-collection.ts  API-backed collection loader with fallback
+  src/components/          Learning, admin, and shared UI
+  src/lib/data.ts          Empty client-side collections; public learning content comes from the API
+  src/lib/use-portfolio-collection.ts  API-backed content collection loader
   public/                  Hero art and downloadable resume
 server/
   src/index.js             API entry point, startup, and graceful shutdown
@@ -68,45 +68,40 @@ server/
   src/admin-auth.js        Password hashing, JWT cookie, bootstrap owner
   src/models.js            Mongoose schemas
   src/storage.js           MongoDB and local preview persistence adapters
-  src/data.js              Starter portfolio data
+  src/data.js              Empty starter collections; no fabricated course content
   test/                    Node test-runner API and access-control tests
 render.yaml               Render Blueprint for the API service
 ```
 
 ## Features and routes
 
-### Public portfolio and learning studio
+### Learning platform routes
 
 | Route | Purpose |
 | --- | --- |
-| `/` | Long-form portfolio homepage, rotating role label, services, skills, projects, testimonials, journal, and contact CTA |
-| `/about` | Working values, interactive four-step process, and toolkit overview |
-| `/services` | Service catalogue, selectable scope planner, timeline estimate, and expandable FAQs; the planner can pre-fill the contact form |
-| `/resources` | Searchable learning library with path filters and links to courses, projects, certificates, and journal notes |
-| `/projects` | Searchable/filterable project collection |
-| `/courses` | Course catalogue, category filter, and search |
-| `/learn/[slug]` | Account-protected lesson workspace; completed lessons save to that learner’s account |
-| `/certificates` | Account-protected collection of certificates actually earned by the signed-in learner |
-| `/certificates/[slug]` | Private certificate detail for an awarded course completion |
-| `/verify/[number]` | Public verification page for a certificate’s unique award number |
-| `/blog` | Searchable and filterable journal |
-| `/blog/[slug]` | Reading view and in-article navigation |
-| `/dashboard` | Account-protected dashboard of real course progress and earned certificates |
-| `/profile` | Private learner account summary and activity |
-| `/assistant` | Account-protected learning assistant prototype (local suggestions; no external LLM key required) |
+| `/` | Learning homepage with real course-catalog and learner-account states |
+| `/courses` | Catalog of published courses that contain authored lessons |
+| `/learn/[slug]` | Account-protected reader for the course author's actual lesson content |
+| `/certificates` | Account-protected list of certificates earned by the signed-in learner |
+| `/certificates/[slug]` | Private certificate detail with the learner's name, course mark, award date, and certificate ID |
+| `/verify/[number]` | Public verification page for a real certificate award |
+| `/dashboard` | Account-protected view of the learner's saved course progress |
+| `/profile` | Private learner profile and profile-photo upload |
 | `/login`, `/signup` | Learner account sign-in and registration |
-| `/contact` | Validated contact form; project planner briefs can be continued here |
-| `/admin` | Private creator studio sign-in and role-aware admin dashboard; excluded from search indexing |
+| `/admin` | Private Learning Admin for course authoring and administration |
 
-### Dynamic behaviour
+Legacy portfolio routes (`/about`, `/services`, `/resources`, `/projects`, `/blog`, `/contact`, and `/assistant`) redirect to `/courses`.
 
-- The home hero rotates through developer/building/learning roles and respects reduced-motion settings.
-- Search, tabs, collection filters, course lessons, account sections, testimonials, and service planner are interactive.
-- Learners create an account or sign in before opening a course workspace, dashboard, profile, assistant, or certificates.
-- Lesson completion is stored per learner. Completing every lesson in a course creates one account-linked certificate that can be revisited and downloaded as PDF.
-- Services can be selected together. The planner produces a scope/timeline summary and carries it into `/contact?brief=...`.
-- Public project, course, article, and testimonial lists load from the API when available and retain bundled fallback content when it is not. Learner progress and certificates never fall back to shared demo data.
-- Admin edits are validated server-side, saved to MongoDB when connected, and returned through the public collection API.
+### Learning and publishing behaviour
+
+- New visitors see a learning-platform homepage, not a prefilled Bashir learner account. Learners must sign up or log in before opening course lessons, their dashboard, profile, or earned certificates.
+- Course progress is private and stored per learner. Completing every authored lesson awards one account-linked certificate that can be revisited, downloaded as PDF, and publicly verified by its real certificate ID.
+- Certificate artwork follows the supplied parchment-and-navy reference with a geometric gold frame. It displays the learner's account name, actual course title and vector mark, award date, and certificate ID; it invents no instructor signature or placeholder details.
+- The seeded/demo course catalog, sample portfolio projects/articles/testimonials, and sample certificates have been removed. A one-time MongoDB migration deletes the known demo rows and associated fake course progress; the local preview store filters these legacy examples too.
+- Only courses with a nonempty authored curriculum appear in the learner catalog. Learning Admin requires 1–120 lesson blocks, each with a title and at least 20 characters of substantive lesson content. Lesson count and course-completion threshold come from that curriculum.
+- Learner lesson pages render the saved course author's lesson content. They do not invent lesson titles, durations, player states, examples, or discussion copy.
+- Profile-photo upload is available only from the signed-in Profile page. The admin course form stores vector icon names; it does not require downloaded course artwork.
+- The app can run locally with an empty JSON preview store. MongoDB is required for durable production storage.
 
 ## Admin roles and permissions
 
@@ -127,7 +122,7 @@ The bootstrap owner is marked as environment-managed and cannot be demoted or di
 1. Set `JWT_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` on the API host.
 2. Start/redeploy the API. It creates or refreshes the environment-managed owner account.
 3. Open `/admin` on the frontend and sign in with that account.
-4. Use **Content studio** for projects, courses, certificates, articles, and testimonials.
+4. Use **Course management** to add a title, metadata, and the authored curriculum. The form requires 1–120 lessons, each with a title and at least 20 characters of content.
 5. Use **Inbox** to review messages and move them through `new`, `read`, `replied`, or `archived`.
 6. Use **Team & roles** to create accounts with a minimum 12-character password and least-privilege role. Accounts can be deactivated rather than deleted.
 
@@ -149,7 +144,7 @@ All endpoints return JSON. Errors use `{ "error": "..." }`; field-validation err
 | `GET` | `/api/:collection/:slug` | Public | Single item lookup for a supported collection |
 | `POST` | `/api/contact` | Public, rate-limited | Validates and stores a contact message |
 
-Public list responses use `{ items, source }`, with source `mongodb` or `preview`. The public `/api/certificates` collection is legacy portfolio content only; learner certificates are generated and returned through the protected endpoints below. Contact input fields are `name`, `email`, `subject`, and `message`; the endpoint applies length limits, basic email validation, and an 8-submission/15-minute IP limit.
+Public list responses use `{ items, source }`, with source `mongodb` or `preview`. Course responses include the authored `curriculum` and accurate lesson count. The public `/api/certificates` collection is retained only for backward-compatible API consumers and is not used to show learner awards; learner certificates are generated and returned through the protected endpoints below. Contact input fields are `name`, `email`, `subject`, and `message`; the endpoint applies length limits, basic email validation, and an 8-submission/15-minute IP limit.
 
 ### Learner endpoints
 
@@ -188,7 +183,7 @@ All endpoints except `/session`, `/login`, and `/logout` require a valid signed 
 | `PATCH` | `/api/admin/users/:id` | Owner | Updates `name`, `role`, or `active` state |
 | `GET` | `/api/admin/activity?limit=100` | Owner, admin | Reads recent audit events |
 
-Supported content collection names are exactly `projects`, `courses`, `certificates`, `articles`, and `testimonials`. The API allowlists fields per collection, validates slugs/numbers/lengths, and uses Mongoose validators when MongoDB is active. New articles require a plain-text body (up to 12,000 characters); separate paragraphs with a blank line.
+Legacy admin API collection names remain allowlisted for compatibility, but the Learning Admin interface exposes course management only. Course publishing requires 1–120 authored lessons; every lesson needs a title and at least 20 characters of content, and the API derives the lesson count from that curriculum. Slugs and field lengths are validated server-side, and Mongoose validators also run when MongoDB is active.
 
 ## Data model and persistence
 
@@ -207,9 +202,9 @@ Mongoose collections:
 - **AdminAudit:** actor, action, entity, summary, safe metadata, timestamp.
 - **SiteSetting:** small operational settings, including a one-time starter-content initialization marker.
 
-Starter content is initialized once with insert-only upserts: updating or deleting portfolio records in the admin workspace does not reset them to seed values at the next start. The local preview adapter stores content, messages, users, and audit entries in the ignored `server/data/store.json`, using atomic writes and a serialized mutation queue. `LOCAL_STORE_PATH` can point tests to an isolated temporary file.
+There are no demo portfolio or course rows in the seed collections. The server records a one-time migration that removes known legacy demo courses, associated progress and sample certificate records, and portfolio-only demo collections. The local preview adapter stores content, messages, users, and audit entries in the ignored `server/data/store.json`, using atomic writes and a serialized mutation queue. `LOCAL_STORE_PATH` can point tests to an isolated temporary file.
 
-Use MongoDB for any persistent deployment. The included Render Blueprint selects the paid `starter` web-service plan so the API does not spin down while idle; Render charges for paid compute, so review the current plan price before syncing or upgrading an existing service. The Blueprint setting does not change an already-created Render service until you sync/apply it. Free Render services can spin down, and the local filesystem is not durable storage. In development, the API remains usable with local preview data. In production, the health endpoint returns `503` and data routes fail closed until MongoDB is connected; no contact or portfolio writes are accepted into an ephemeral local file.
+Use MongoDB for any persistent deployment. The included Render Blueprint selects the paid `starter` web-service plan so the API does not spin down while idle; Render charges for paid compute, so review the current plan price before syncing or upgrading an existing service. The Blueprint setting does not change an already-created Render service until you sync/apply it. Free Render services can spin down, and the local filesystem is not durable storage. In development, the API remains usable with local preview data. In production, the health endpoint returns `503` and data routes fail closed until MongoDB is connected; no contact or learning-content writes are accepted into an ephemeral local file.
 
 ## Local setup
 
@@ -284,7 +279,7 @@ To enable a local owner account, set a unique `JWT_SECRET` (at least 32 bytes), 
 3. Optionally set `API_INTERNAL_URL` in Vercel to override the configured default Render API URL. The production build succeeds without this variable; on Vercel the rewrite defaults to `https://coding-with-bashir-api.onrender.com`.
 4. Deploy. The Next.js rewrite proxies `/api/*` through Vercel to Render; browser code continues to use same-origin `/api` URLs. Do not hardcode `localhost`, a Render private address, or an API secret into client-side code.
 5. Add the final Vercel domain to Render’s `FRONTEND_ORIGINS` if direct browser-to-API calls are introduced. The current UI uses the same-origin rewrite; exact CORS origins still provide the safe configuration for future direct calls.
-6. Verify the Vercel site, `/api/health` through the Vercel domain, `/projects`, and `/services`. Create a learner account, complete a course’s lessons, and verify the progress and awarded certificate remain after signing out/in and after a redeploy. Also verify the bootstrap owner can sign in at `/admin`.
+6. Verify the Vercel site, `/api/health` through the Vercel domain, `/courses`. Publish an authored course from `/admin`, create a learner account, complete its lessons, and verify the progress and awarded certificate remain after signing out/in and after a redeploy. Also verify the bootstrap owner can sign in at `/admin`.
 
 ### Manual Vercel environment example
 
@@ -333,6 +328,6 @@ An unauthenticated admin session check should return a JSON setup/authentication
 - Learner and admin passwords use Node’s scrypt implementation with per-password random salts. Separate HttpOnly, SameSite=Lax cookies are Secure in production; learner sessions expire after 14 days and admin sessions after eight hours.
 - There is no public admin signup, no wildcard credentialed CORS, and no role-only frontend security; API authorization is enforced server-side.
 - The local JSON store is a development/preview fallback only. Production data routes return `503` until MongoDB is connected, rather than accepting writes to an ephemeral Render filesystem.
-- Learner registration, sign-in, per-account course progress, and account-linked course-completion certificates are implemented. Course certificates carry the learner’s account name and a vector course mark; legacy awards resolve their mark from the course record. Learners can upload or remove a cropped profile photo only from the Profile page; photos are resized to JPEG before being stored privately on the account. Lesson materials and the assistant’s replies remain lightweight in-app learning prototypes; there is no hosted video backend, payment flow, or external AI provider.
-- Admin content fields intentionally match the current portfolio schemas. Large media uploads, email delivery, password-reset emails, and MFA/SSO are not included in this release.
+- Learner registration, sign-in, per-account course progress, and account-linked course-completion certificates are implemented. Course certificates carry the learner’s account name and a vector course mark; legacy awards resolve their mark from the course record. Learners can upload or remove a cropped profile photo only from the Profile page; photos are resized to JPEG before being stored privately on the account. Course lessons are authored through Learning Admin; no video player or AI assistant is presented as real course material. There is no hosted video backend, payment flow, or external AI provider.
+- Learning Admin focuses on course metadata and authored curriculum. Large media uploads, email delivery, password-reset emails, and MFA/SSO are not included in this release.
 - Before public production launch, configure real contact/social details, a custom domain, strong unique secrets, database backups, and a privacy/retention policy for contact messages.

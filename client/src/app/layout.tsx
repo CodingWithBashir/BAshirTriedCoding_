@@ -11,16 +11,16 @@ import { LearnerProvider } from "@/components/learner-auth";
 
 export const metadata: Metadata = {
   title: {
-    default: "Bashir Hussein — Developer, Builder & Mentor",
+    default: "Coding With Bashir — Learn, Practice, Grow",
     template: "%s · Coding With Bashir",
   },
   description:
-    "The home of Bashir Hussein — a full-stack developer and founder building useful products and helping a new generation of African developers learn by creating.",
-  applicationName: "Coding With Bashir",
-  keywords: ["Bashir Hussein", "Rwanda developer", "Next.js", "web development", "learn to code"],
+    "Learn coding at your own pace with authored lessons, private progress tracking, and verifiable course-completion certificates.",
+  applicationName: "Coding With Bashir Learning",
+  keywords: ["Coding With Bashir", "coding courses", "web development lessons", "learn to code", "learner certificates"],
   openGraph: {
-    title: "Bashir Hussein — Coding With Bashir",
-    description: "Build, learn, create. A portfolio and learning home for developers.",
+    title: "Coding With Bashir Learning",
+    description: "A learner-first space for real lessons, steady practice, and earned certificates.",
     type: "website",
   },
 };

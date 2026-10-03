@@ -7,6 +7,7 @@ import { join } from "node:path";
 const testDirectory = await mkdtemp(join(tmpdir(), "coding-with-bashir-api-test-"));
 process.env.LOCAL_STORE_PATH = join(testDirectory, "store.json");
 const { app } = await import("../src/app.js");
+const { createContent } = await import("../src/storage.js");
 const server = app.listen(0, "127.0.0.1");
 await new Promise((resolve) => server.once("listening", resolve));
 const address = server.address();
@@ -25,11 +26,18 @@ test("health endpoint reports a ready API", async () => {
   assert.equal(body.service, "coding-with-bashir-api");
 });
 
-test("projects are returned from the starter portfolio collection", async () => {
+test("public portfolio project collection has no seeded demo examples", async () => {
   const response = await fetch(`${base}/api/projects`);
   const body = await response.json();
   assert.equal(response.status, 200);
-  assert.ok(body.items.some((item) => item.slug === "agabonabanyefree"));
+  assert.deepEqual(body.items, []);
+});
+
+test("public courses do not include seeded or unauthored demo curriculum", async () => {
+  const response = await fetch(`${base}/api/courses`);
+  const body = await response.json();
+  assert.equal(response.status, 200);
+  assert.deepEqual(body.items, []);
 });
 
 test("public certificate collection no longer exposes sample learner awards", async () => {
@@ -64,6 +72,23 @@ test("valid contact message is accepted into the persistent store", async () => 
 });
 
 test("learner accounts own saved lesson progress and receive a certificate after course completion", async () => {
+  const courseFixture = await createContent("courses", {
+    title: "Test authored course",
+    slug: "test-authored-course",
+    category: "Test",
+    level: "Beginner",
+    duration: "Test fixture",
+    description: "A local API test course with real lesson content for validating progress and certificates.",
+    icon: "Code2",
+    color: "cyan",
+    curriculum: [
+      { title: "Start with the document", content: "Write a small HTML document with a clear heading and a short paragraph. Open it in a browser and inspect the result." },
+      { title: "Style a focused component", content: "Add a stylesheet and use a few spacing, color, and typography rules to make the heading and paragraph easier to read." },
+      { title: "Review your changes", content: "Refresh the browser after each change. Compare what you expected with what you see, then adjust one rule at a time." },
+    ],
+    lessons: 3,
+  });
+  assert.ok(courseFixture.id);
   const password = "CuriousLearner!2042";
   const signup = await fetch(`${base}/api/auth/signup`, {
     method: "POST",
@@ -110,8 +135,10 @@ test("learner accounts own saved lesson progress and receive a certificate after
 
   const coursesResponse = await fetch(`${base}/api/courses`);
   const courses = (await coursesResponse.json()).items;
-  const course = courses.find((item) => item.slug === "javascript");
+  const course = courses.find((item) => item.slug === "test-authored-course");
   assert.ok(course);
+  assert.equal(course.lessons, 3);
+  assert.equal(course.curriculum.length, 3);
   assert.equal("progress" in course, false);
 
   let result;

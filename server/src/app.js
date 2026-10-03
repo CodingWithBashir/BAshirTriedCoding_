@@ -30,6 +30,7 @@ app.use(cors({
   maxAge: 600,
 }));
 app.use("/api/learner/profile", express.json({ limit: "512kb" }));
+app.use("/api/admin/content", express.json({ limit: "2mb" }));
 app.use(express.json({ limit: "32kb" }));
 app.use(express.urlencoded({ extended: false, limit: "32kb" }));
 

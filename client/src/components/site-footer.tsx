@@ -1,22 +1,22 @@
 import Link from "next/link";
-import { ArrowUpRight, Github, Heart, Linkedin, Youtube } from "lucide-react";
+import { ArrowUpRight, Heart } from "lucide-react";
 import { LogoMark } from "@/components/ui";
 
 export function SiteFooter() {
   return (
-    <footer className="site-footer">
+    <footer className="site-footer learning-site-footer">
       <div className="site-footer__main wrap">
         <div className="site-footer__brand">
-          <Link className="brand" href="/" aria-label="Coding With Bashir home"><LogoMark /><span className="brand__word">Coding With <b>Bashir</b></span></Link>
-          <p>Build boldly. Learn out loud.<br />Make something that matters.</p>
+          <Link className="brand" href="/" aria-label="Coding With Bashir Learning home"><LogoMark /><span className="brand__word">Coding With <b>Bashir</b></span></Link>
+          <p>Learn with purpose.<br />Build with confidence.</p>
         </div>
         <div className="site-footer__links">
-          <div><span className="footer-label">Explore</span><Link href="/about">About Bashir</Link><Link href="/services">Services</Link><Link href="/resources">Resources</Link><Link href="/courses">Courses</Link><Link href="/projects">Projects</Link><Link href="/certificates">Certificates</Link><Link href="/admin">Creator studio</Link></div>
-          <div><span className="footer-label">Say hello</span><Link href="/blog">From the blog</Link><Link href="/contact">Contact Bashir <ArrowUpRight size={12} /></Link><a href="mailto:hello@codingwithbashir.dev">Email me <ArrowUpRight size={12} /></a></div>
+          <div><span className="footer-label">Learning</span><Link href="/courses">Course catalog</Link><Link href="/dashboard">My learning</Link><Link href="/certificates">Earned certificates</Link><Link href="/profile">Learner profile</Link></div>
+          <div><span className="footer-label">Your account</span><Link href="/signup">Create an account <ArrowUpRight size={12} /></Link><Link href="/login">Sign in <ArrowUpRight size={12} /></Link><Link href="/admin">Learning Admin</Link></div>
         </div>
-        <div className="site-footer__social"><span className="footer-label">Around the web</span><div className="social-links"><a href="https://github.com/CodingWithBashir" target="_blank" rel="noreferrer" aria-label="GitHub"><Github size={16} /></a><a href="https://youtube.com/@CodingWithBashir" target="_blank" rel="noreferrer" aria-label="YouTube"><Youtube size={16} /></a><a href="https://linkedin.com/" target="_blank" rel="noreferrer" aria-label="LinkedIn"><Linkedin size={16} /></a></div><span className="availability"><i /> Available for thoughtful projects</span></div>
+        <div className="site-footer__social"><span className="footer-label">Learning, at your pace</span><p className="footer-learning-note">Your progress belongs to your account. Certificates are awarded for completed courses.</p><Link href="/courses" className="footer-course-link">Find a course <ArrowUpRight size={13} /></Link></div>
       </div>
-      <div className="site-footer__bottom wrap"><span>© {new Date().getFullYear()} Coding With Bashir · Kigali, Rwanda</span><span>Made with <Heart size={12} fill="currentColor" /> and a little curiosity.</span><Link href="/contact">Let’s build something <ArrowUpRight size={12} /></Link></div>
+      <div className="site-footer__bottom wrap"><span>© {new Date().getFullYear()} Coding With Bashir Learning</span><span>Made for curious learners <Heart size={12} fill="currentColor" /></span><Link href="/courses">Keep learning <ArrowUpRight size={12} /></Link></div>
     </footer>
   );
 }

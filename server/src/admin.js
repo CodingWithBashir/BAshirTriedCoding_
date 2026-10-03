@@ -43,9 +43,8 @@ const fieldDefinitions = {
     arrays: ["stack"], booleans: ["featured"],
   },
   courses: {
-    required: ["title", "slug", "description", "lessons"],
+    required: ["title", "slug", "description", "curriculum"],
     strings: { title: 120, slug: 120, category: 60, level: 40, duration: 60, description: 3000, icon: 50, color: 32 },
-    numbers: { lessons: [1, 120] },
   },
   certificates: {
     required: ["title", "slug", "code", "description"],
@@ -113,7 +112,18 @@ function sanitizeContent(collection, body, partial = false) {
   if (!body || typeof body !== "object" || Array.isArray(body)) throw badRequest("Send a JSON object for the content item.");
   const sanitized = {};
   for (const [key, value] of Object.entries(body)) {
-    if (Object.hasOwn(definition.strings, key)) {
+    if (collection === "courses" && key === "curriculum") {
+      if (!Array.isArray(value) || value.length < 1 || value.length > 120) throw badRequest("A course must include between 1 and 120 authored lessons.");
+      sanitized.curriculum = value.map((lesson, index) => {
+        if (!lesson || typeof lesson !== "object" || Array.isArray(lesson)) throw badRequest(`Lesson ${index + 1} must include a title and lesson content.`);
+        const title = cleanString(lesson.title, `Lesson ${index + 1} title`, 140);
+        const content = cleanString(lesson.content, `Lesson ${index + 1} content`, 12000);
+        if (title.length < 2) throw badRequest(`Lesson ${index + 1} needs a title.`);
+        if (content.length < 20) throw badRequest(`Lesson ${index + 1} needs real lesson content (at least 20 characters).`);
+        return { title, content };
+      });
+      sanitized.lessons = sanitized.curriculum.length;
+    } else if (Object.hasOwn(definition.strings, key)) {
       sanitized[key] = cleanString(value, key, definition.strings[key]);
     } else if (definition.arrays?.includes(key)) {
       const source = Array.isArray(value) ? value : String(value ?? "").split(",");
